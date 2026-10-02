@@ -29,6 +29,9 @@ jobs:
           distribution: temurin
           java-version: "21"
 
+      - name: Validate JavaScript syntax
+        run: node --check app.js
+
       - name: Prepare web bundle
         run: |
           rm -rf www
