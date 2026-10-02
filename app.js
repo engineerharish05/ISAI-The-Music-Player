@@ -42,7 +42,16 @@ view.innerHTML='<div class="eyebrow">Playlists</div><h1>Made for you.</h1><div c
 wire()
 }
 function settings(){
-view.innerHTML='<div class="eyebrow">Settings</div><h1>Make ISAI yours.</h1><div class="card" style="padding:4px 18px"><div class="setting"><div><b>Dark theme</b><span>ISAI night appearance</span></div><button class="switch '+(state.theme==="dark"?"on":"")+'" data-action="toggle-theme"><div class="knob"></div></button></div><div class="setting"><div><b>Shuffle</b><span>Randomize next tracks</span></div><button class="switch '+(state.shuffle?"on":"")+'" data-action="shuffle-toggle"><div class="knob"></div></button></div><div class="setting"><div><b>Equalizer</b><span>10-band player controls</span></div><button class="more" data-action="equalizer">›</button></div><div class="setting"><div><b>Sleep timer</b><span>Stop playback automatically</span></div><button class="more" data-action="sleep">›</button></div><div class="setting"><div><b>Playback speed</b><span>'+state.speed+"×</span></div><button class="more" data-action="speed">›</button></div><div class="setting"><div><b>Queue</b><span>"+state.queue.length+" tracks</span></div><button class="more" data-action="queue">›</button></div></div><section class="section card banner"><b>ISAI — The Music Player</b><p>Premium dark/gold visual system, your ISAI emblem and a mobile-first music-player interaction model.</p></section>';
+view.innerHTML='<div class="eyebrow">Settings</div><h1>Make ISAI yours.</h1>'+
+'<div class="card" style="padding:4px 18px">'+
+'<div class="setting"><div><b>Dark theme</b><span>ISAI night appearance</span></div><button class="switch '+(state.theme==="dark"?"on":"")+'" data-action="toggle-theme"><div class="knob"></div></button></div>'+
+'<div class="setting"><div><b>Shuffle</b><span>Randomize next tracks</span></div><button class="switch '+(state.shuffle?"on":"")+'" data-action="shuffle-toggle"><div class="knob"></div></button></div>'+
+'<div class="setting"><div><b>Equalizer</b><span>10-band player controls</span></div><button class="more" data-action="equalizer">›</button></div>'+
+'<div class="setting"><div><b>Sleep timer</b><span>Stop playback automatically</span></div><button class="more" data-action="sleep">›</button></div>'+
+'<div class="setting"><div><b>Playback speed</b><span>'+state.speed+'×</span></div><button class="more" data-action="speed">›</button></div>'+
+'<div class="setting"><div><b>Queue</b><span>'+state.queue.length+' tracks</span></div><button class="more" data-action="queue">›</button></div>'+
+'</div>'+
+'<section class="section card banner"><b>ISAI — The Music Player</b><p>Premium dark/gold visual system, your ISAI emblem and a mobile-first music-player interaction model.</p></section>';
 wire()
 }
 function openPlayer(id){const s=songs.find(x=>x.id===id);if(!s)return;state.current=s;state.playing=true;state.history=[id,...state.history.filter(x=>x!==id)].slice(0,30);if(!state.queue.length)state.queue=songs.map(x=>x.id);save();load(s);player();updateMini()}
