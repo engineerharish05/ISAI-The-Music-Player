@@ -1,37 +1,41 @@
 # ISAI — The Music Player
 
-ISAI is a mobile-first interactive prototype for a premium Android music player.
+ISAI is a mobile-first music-player interface built around the uploaded ISAI identity and a modern glass/Apple-style aesthetic.
 
-## Prototype scope
-- Home dashboard
-- Library
-- Search
-- Playlists
-- Settings
-- Full player
-- Mini-player
-- Previous / next / play / pause
-- Favorites
+## Current build
+
+- SimpMusic-inspired music-player navigation and interaction patterns
+- ISAI logo and branding
+- Home, Explore, Library, Playlists and Settings
+- Mini player and full-screen player
+- Local audio import through the browser
+- Search and genre filtering
+- Favorites / liked songs
 - Listening history
-- Light/dark theme
-- Responsive premium + digital-brutalist visual language
-- Tamil-inspired identity placeholder
+- Queue controls
+- Shuffle and repeat
+- Playback speed
+- Sleep timer
+- Equalizer interface
+- Lyrics interface
+- Light / dark theme
+- Local browser persistence for preferences, favorites, history and playlists
+- Responsive mobile and desktop layout
 
-## Run on your phone
-1. Open `index.html` in Acode.
-2. Use Acode's preview/browser option.
-3. This prototype needs no npm, Flutter, Gradle, or large local toolchain.
+## Important scope
 
-## Important
-Online services such as Spotify, Apple Music, YouTube, and cloud providers are represented by integration points only. A production app must use each provider's official APIs/SDKs and follow their authentication, licensing, and playback restrictions.
+This repository is currently a browser-based ISAI prototype. It does not include SimpMusic's YouTube Music extraction/backend, account system, Android Auto integration, online lyrics providers, SponsorBlock, or other service-specific infrastructure.
 
-## Next engineering stage
-The prototype can later be ported to a native Android architecture with:
-- Media3/ExoPlayer audio engine
-- Room database
-- Android MediaSession
-- foreground playback service
-- storage/media permissions
-- background library scanner
-- artwork cache
-- optional online provider modules
+The UI and interaction model are implemented separately for ISAI rather than copying SimpMusic's source code.
+
+## Reference
+
+SimpMusic is an independent open-source project by maxrave-dev. This project uses it as a public reference for music-player interaction patterns and feature organization.
+
+## Run
+
+Open index.html in a modern browser. For best results, serve the folder through a small local HTTP server.
+
+## Project
+
+Private repository: engineerharish05/ISAI-The-Music-Player
