@@ -19,9 +19,7 @@
       <button class="round" data-action="toggle-theme" aria-label="Theme">◐</button>
     </div>
   </header>
-
   <main id="view"></main>
-
   <section id="miniPlayer" class="mini hidden">
     <button class="mini-cover" data-action="open-player">♫</button>
     <button class="mini-info" data-action="open-player"><b id="miniTitle">Nothing playing</b><span id="miniArtist">Choose a song</span></button>
@@ -29,7 +27,6 @@
     <button class="mini-main" id="miniPlay" data-action="play" aria-label="Play or pause">▶</button>
     <button class="mini-btn" data-action="next" aria-label="Next track">›</button>
   </section>
-
   <nav class="bottom" aria-label="Primary navigation">
     <button class="nav active" data-page="home"><i>⌂</i><span>Home</span></button>
     <button class="nav" data-page="explore"><i>⌕</i><span>Explore</span></button>
@@ -42,6 +39,11 @@
 <input id="filePicker" type="file" accept="audio/*" multiple hidden>
 <audio id="audio" preload="metadata"></audio>
 <script src="app.js"></script>
-<script>if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(() => {}));</script>
+<script src="final.js"></script>
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(() => {}));
+}
+</script>
 </body>
 </html>
