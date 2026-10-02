@@ -12,11 +12,19 @@ let songs=[...seed],urls=[];
 const nativePlugins=window.Capacitor?.Plugins||{};
 const mediaStore=nativePlugins.CapacitorMediaStore||null;
 const nativeAudio=nativePlugins.NativeAudio||null;
+const haptics=nativePlugins.Haptics||null;
 let nativeLibraryReady=false;
+let lastHapticAt=0;
+async function haptic(style="LIGHT"){
+  if(!haptics?.impact)return;
+  const now=Date.now();
+  if(now-lastHapticAt<45)return;
+  lastHapticAt=now;
+  try{await haptics.impact({style})}catch(error){console.warn("ISAI haptics unavailable:",error)}
+}
 let nativeAssetId=null;
 
 async function initNativeMusic(){
-  if(!mediaStore)return;
   try{
     const permission=await mediaStore.requestPermissions({types:["audio"]});
     if(permission?.audio==="denied")return;
@@ -28,7 +36,7 @@ async function initNativeMusic(){
       cover:m.albumArtUri||"",color:"linear-gradient(145deg,#171713,#b48b32)"
     }));
     if(local.length){songs=local;state.queue=songs.map(s=>s.id);nativeLibraryReady=true;save();render()}
-    if(nativeAudio){await nativeAudio.configure({background:true,focus:true,showNotification:true});nativeAudio.addListener?.("complete",()=>next())}
+    if(nativeAudio){await nativeAudio.configure({background:true,focus:true,showNotification:true});nativeAudio.addListener?.("complete",handleEnded)}
   }catch(error){console.warn("ISAI native music initialization failed:",error)}
 }
 async function nativeLoad(s){
@@ -46,9 +54,9 @@ const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"
 const fmt=s=>Number.isFinite(s)?Math.floor(s/60)+":"+String(Math.floor(s%60)).padStart(2,"0"):"0:00";
 const art=s=>s.cover?'<div class="song-art"><img src="'+s.cover+'" alt=""></div>':'<div class="song-art" style="background:'+s.color+'">♫</div>';
 const albumArt=s=>s.cover?'<div class="album-art"><img src="'+s.cover+'" alt=""></div>':'<div class="album-art" style="background:'+s.color+'">♫</div>';
-function msg(t){toast.textContent=t;toast.classList.add("show");clearTimeout(window.tt);window.tt=setTimeout(()=>toast.classList.remove("show"),1600)}
-function setPage(p){state.page=p;render()}
-function row(s){return '<div class="song" data-song="'+s.id+'">'+art(s)+'<div class="song-info"><b>'+esc(s.title)+'</b><span>'+esc(s.artist)+" · "+esc(s.album)+" · "+fmt(s.duration)+'</span></div><button class="heart '+(state.favorites.has(s.id)?"active":"")+'" data-fav="'+s.id+'">'+(state.favorites.has(s.id)?"♥":"♡")+'</button><button class="more" data-more="'+s.id+'">⋯</button></div>'}
+function msg(t){haptic("LIGHT");toast.textContent=t;toast.classList.add("show");clearTimeout(window.tt);window.tt=setTimeout(()=>toast.classList.remove("show"),1600)}
+function setPage(p){if(state.page!==p)haptic("LIGHT");state.page=p;render()}
+function row(s){return '<div class="song" data-song="'+esc(String(s.id))+'">'+art(s)+'<div class="song-info"><b>'+esc(s.title)+'</b><span>'+esc(s.artist)+" · "+esc(s.album)+" · "+fmt(s.duration)+'</span></div><button class="heart '+(state.favorites.has(s.id)?"active":"")+'" data-fav="'+s.id+'">'+(state.favorites.has(s.id)?"♥":"♡")+'</button><button class="more" data-more="'+s.id+'">⋯</button></div>'}
 function render(){document.body.classList.toggle("dark",state.theme==="dark");document.querySelectorAll(".nav").forEach(n=>n.classList.toggle("active",n.dataset.page===state.page));({home,explore,library,playlists,settings}[state.page]||home)();updateMini()}
 function home(){
 const recent=state.history.map(id=>songs.find(s=>s.id===id)).filter(Boolean).slice(0,6);
@@ -85,19 +93,36 @@ view.innerHTML='<div class="eyebrow">Settings</div><h1>Make ISAI yours.</h1>'+
 '<section class="section card banner"><b>ISAI — The Music Player</b><p>Premium dark/gold visual system, your ISAI emblem and a mobile-first music-player interaction model.</p></section>';
 wire()
 }
-function openPlayer(id){const s=songs.find(x=>x.id===id);if(!s)return;state.current=s;state.playing=true;state.history=[id,...state.history.filter(x=>x!==id)].slice(0,30);if(!state.queue.length)state.queue=songs.map(x=>x.id);save();load(s);player();updateMini()}
+function openPlayer(id){const s=songs.find(x=>String(x.id)===String(id));if(!s)return;haptic("LIGHT");state.current=s;state.playing=true;state.history=[id,...state.history.filter(x=>x!==id)].slice(0,30);if(!state.queue.length)state.queue=songs.map(x=>x.id);save();load(s);player();updateMini()}
 async function load(s){if(nativeLibraryReady&&s.src){const ok=await nativeLoad(s);if(ok)return}if(!s.src){audio.removeAttribute("src");audio.load();return}audio.src=s.src;audio.volume=state.volume;audio.playbackRate=state.speed;audio.play().catch(()=>state.playing=false)}
 function player(){const s=state.current;if(!s)return;view.innerHTML='<div class="player"><button class="back" data-page="home">‹ Back</button><div class="big-cover" style="background:'+s.color+'">'+(s.cover?'<img src="'+s.cover+'" alt="">':"♫")+'</div><div class="player-title">'+esc(s.title)+'</div><div class="player-artist">'+esc(s.artist)+" · "+esc(s.album)+'</div><div class="progress"><input id="seek" type="range" min="0" max="'+Math.max(1,s.duration)+'" value="'+Math.floor(audio.currentTime||0)+'"><div class="times"><span id="cur">'+fmt(audio.currentTime)+'</span><span id="dur">'+fmt(audio.duration||s.duration)+'</span></div></div><div class="controls"><button class="control" data-action="shuffle">⤨</button><button class="control" data-action="previous">‹</button><button class="control main" data-action="play">'+(state.playing?"Ⅱ":"▶")+'</button><button class="control" data-action="next">›</button><button class="control" data-action="repeat">↻</button></div><div class="tools"><button class="chip" data-action="lyrics">Lyrics</button><button class="chip" data-action="queue">Queue</button><button class="chip" data-action="equalizer">EQ</button><button class="chip" data-action="sleep">Sleep</button></div></div>';wire();document.querySelector("#seek").oninput=async e=>{const value=+e.target.value;if(nativeLibraryReady&&nativeAudio&&nativeAssetId){try{await nativeAudio.setCurrentTime({assetId:nativeAssetId,time:value})}catch(error){console.warn("Native seek failed:",error)}}else{audio.currentTime=value}progress()}}
 async function progress(){let current=audio.currentTime;if(nativeLibraryReady&&nativeAudio&&nativeAssetId){try{current=(await nativeAudio.getCurrentTime({assetId:nativeAssetId})).currentTime||0}catch(_){}}const s=document.querySelector("#seek");if(s)s.value=current;const c=document.querySelector("#cur");if(c)c.textContent=fmt(current);const d=document.querySelector("#dur");if(d)d.textContent=fmt(audio.duration||state.current?.duration)}
 function updateMini(){if(!state.current){mini.classList.add("hidden");return}mini.classList.remove("hidden");document.querySelector("#miniTitle").textContent=state.current.title;document.querySelector("#miniArtist").textContent=state.current.artist;document.querySelector("#miniPlay").textContent=state.playing?"Ⅱ":"▶"}
 async function togglePlay(){if(!state.current){openPlayer(songs[0].id);return}if(nativeLibraryReady&&nativeAudio&&nativeAssetId){try{if(state.playing){await nativeAudio.pause({assetId:nativeAssetId});state.playing=false}else{await nativeAudio.resume({assetId:nativeAssetId});state.playing=true}}catch(error){console.warn("Native toggle failed:",error)}}else if(state.playing){audio.pause();state.playing=false}else{state.playing=true;if(state.current.src)audio.play().catch(()=>state.playing=false)}updateMini();if(document.querySelector(".player"))player()}
-function next(){if(!songs.length)return;let i=songs.findIndex(x=>x.id===state.current?.id);let s=state.shuffle?songs[Math.floor(Math.random()*songs.length)]:songs[(i+1+songs.length)%songs.length];openPlayer(s.id)}
-function previous(){if(audio.currentTime>5){audio.currentTime=0;return}let i=songs.findIndex(x=>x.id===state.current?.id);openPlayer(songs[(i-1+songs.length)%songs.length].id)}
-function toggleFav(id){state.favorites.has(id)?state.favorites.delete(id):state.favorites.add(id);state.playlists["Liked Songs"]=[...state.favorites];save();render()}
-function shuffle(){state.shuffle=!state.shuffle;save();msg(state.shuffle?"Shuffle on":"Shuffle off")}
-function repeat(){state.repeat=state.repeat==="all"?"one":state.repeat==="one"?"off":"all";save();msg("Repeat "+state.repeat)}
+function next(){
+  if(!songs.length)return;
+  let i=songs.findIndex(x=>String(x.id)===String(state.current?.id));
+  let s=state.shuffle?songs[Math.floor(Math.random()*songs.length)]:songs[(i+1+songs.length)%songs.length];
+  openPlayer(s.id)
+}
+async function previous(){
+  let currentTime=audio.currentTime||0;
+  if(nativeLibraryReady&&nativeAudio&&nativeAssetId){try{currentTime=(await nativeAudio.getCurrentTime({assetId:nativeAssetId})).currentTime||0}catch(_) {}}
+  if(currentTime>5){
+    if(nativeLibraryReady&&nativeAudio&&nativeAssetId){try{await nativeAudio.setCurrentTime({assetId:nativeAssetId,time:0})}catch(_){}}
+    else audio.currentTime=0;
+    haptic("LIGHT");
+    progress();
+    return;
+  }
+  let i=songs.findIndex(x=>String(x.id)===String(state.current?.id));
+  openPlayer(songs[(i-1+songs.length)%songs.length].id)
+}
+function toggleFav(id){const key=typeof id==="string"&&/^\d+$/.test(id)?Number(id):id;state.favorites.has(key)?state.favorites.delete(key):state.favorites.add(key);state.playlists["Liked Songs"]=[...state.favorites];save();haptic("MEDIUM");render()}
+function shuffle(){state.shuffle=!state.shuffle;save();haptic("LIGHT");msg(state.shuffle?"Shuffle on":"Shuffle off")}
+function repeat(){state.repeat=state.repeat==="all"?"one":state.repeat==="one"?"off":"all";save();haptic("LIGHT");msg("Repeat "+state.repeat)}
 function modal(title,body){document.querySelector(".modal")?.remove();const m=document.createElement("div");m.className="modal";m.innerHTML='<section class="sheet"><div class="sheet-head"><h2>'+esc(title)+'</h2><button class="close" data-action="close">×</button></div>'+body+"</section>";document.body.appendChild(m);m.onclick=e=>{if(e.target===m)m.remove()};wire(m)}
-function queue(){const q=(state.queue.length?state.queue:songs.map(s=>s.id)).map(id=>songs.find(s=>s.id===id)).filter(Boolean);modal("Queue",q.map(s=>'<button class="queue-row" data-q="'+s.id+'">'+art(s)+'<div class="song-info"><b>'+esc(s.title)+'</b><span>'+esc(s.artist)+'</span></div></button>').join(""));document.querySelectorAll("[data-q]").forEach(x=>x.onclick=()=>{document.querySelector(".modal").remove();openPlayer(+x.dataset.q)})}
+function queue(){const q=(state.queue.length?state.queue:songs.map(s=>s.id)).map(id=>songs.find(s=>String(s.id)===String(id))).filter(Boolean);modal("Queue",q.map(s=>'<button class="queue-row" data-q="'+esc(String(s.id))+'">'+art(s)+'<div class="song-info"><b>'+esc(s.title)+'</b><span>'+esc(s.artist)+'</span></div></button>').join(""));document.querySelectorAll("[data-q]").forEach(x=>x.onclick=()=>{document.querySelector(".modal").remove();openPlayer(x.dataset.q)})}
 function lyrics(){modal("Lyrics",'<div class="empty"><div style="font-size:45px">♫</div><p><b>'+esc(state.current?.title||"No song")+'</b></p><p>The ISAI lyrics screen is prepared for a synced-lyrics provider in the native build. This prototype does not invent lyric content.</p></div>')}
 function eq(){const bands=[60,150,400,1000,2400,6000,12000];let html='<div class="chips"><button class="chip active">ISAI Flat</button><button class="chip">Bass</button><button class="chip">Vocal</button><button class="chip">Treble</button></div>';bands.forEach(f=>{html+='<div style="padding:14px 0;border-bottom:1px solid var(--line)"><label style="display:flex;justify-content:space-between;font-size:12px"><span>'+f+' Hz</span><span>0 dB</span></label><input style="width:100%;accent-color:var(--gold)" type="range" min="-12" max="12" value="0"></div>'});modal("Equalizer",html)}
 function sleep(){modal("Sleep timer",'<div class="quick">'+[15,30,45,60,0].map(m=>'<button class="card quick-card" data-sleep="'+m+'"><strong>'+(m?m:"Off")+'</strong><span>'+(m?"minutes":"Cancel timer")+'</span></button>').join("")+"</div>");document.querySelectorAll("[data-sleep]").forEach(x=>x.onclick=()=>{const m=+x.dataset.sleep;state.sleepUntil=m?Date.now()+m*60000:0;save();document.querySelector(".modal")?.remove();msg(m?"Sleep timer set":"Sleep timer off")})}
@@ -115,20 +140,88 @@ async function finishSpotifyLogin(){const q=new URLSearchParams(location.search)
 async function youtubeLogin(){const c=serviceConfig();if(!c.youtubeClientId||!c.youtubeRedirect){msg("Add Google Client ID and redirect URI first");return}const v=randomString(),ch=await pkceChallenge(v),st=randomString(24);localStorage.setItem("isai-youtube-pkce",JSON.stringify({v,st,redirect:c.youtubeRedirect}));const u=new URL("https://accounts.google.com/o/oauth2/v2/auth");u.search=new URLSearchParams({client_id:c.youtubeClientId,response_type:"code",redirect_uri:c.youtubeRedirect,scope:"https://www.googleapis.com/auth/youtube.readonly",code_challenge:ch,code_challenge_method:"S256",access_type:"offline",prompt:"consent",state:st}).toString();location.href=u}
 async function finishYouTubeLogin(){const q=new URLSearchParams(location.search),code=q.get("code"),st=q.get("state");if(!code)return;const s=JSON.parse(localStorage.getItem("isai-youtube-pkce")||"null"),c=serviceConfig();if(!s||s.st!==st)return;try{const body=new URLSearchParams({code,client_id:c.youtubeClientId,redirect_uri:s.redirect,grant_type:"authorization_code",code_verifier:s.v});const r=await fetch("https://oauth2.googleapis.com/token",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body});if(!r.ok)throw 0;localStorage.setItem("isai-youtube-token",JSON.stringify(await r.json()));localStorage.removeItem("isai-youtube-pkce");history.replaceState({},document.title,location.pathname);msg("YouTube connected")}catch(e){msg("YouTube sign-in failed")}}
 function services(){const c=serviceConfig(),sp=!!localStorage.getItem("isai-spotify-token"),yt=!!localStorage.getItem("isai-youtube-token");modal("Connected services",'<div class="setting"><div><b>Spotify</b><span>'+(sp?"Connected":"Not connected")+'</span></div><button class="more" data-service="spotify-login">'+(sp?"✓":"Connect")+'</button></div><div class="setting"><div><b>YouTube</b><span>'+(yt?"Connected":"Not connected")+'</span></div><button class="more" data-service="youtube-login">'+(yt?"✓":"Connect")+'</button></div><input id="spClient" class="search" value="'+esc(c.spotifyClientId||"")+'" placeholder="Spotify Client ID"><input id="spRedirect" class="search" value="'+esc(c.spotifyRedirect||"")+'" placeholder="Spotify HTTPS redirect URI"><input id="ytClient" class="search" value="'+esc(c.youtubeClientId||"")+'" placeholder="Google Client ID"><input id="ytRedirect" class="search" value="'+esc(c.youtubeRedirect||"")+'" placeholder="YouTube HTTPS redirect URI"><button class="pill primary" id="saveServices" style="width:100%;margin-top:12px">Save connection settings</button>');document.querySelector("#saveServices").onclick=()=>{saveServiceConfig({spotifyClientId:document.querySelector("#spClient").value.trim(),spotifyRedirect:document.querySelector("#spRedirect").value.trim(),youtubeClientId:document.querySelector("#ytClient").value.trim(),youtubeRedirect:document.querySelector("#ytRedirect").value.trim()});document.querySelector(".modal")?.remove();msg("Connection settings saved")};document.querySelector("[data-service=\"spotify-login\"]")?.addEventListener("click",spotifyLogin);document.querySelector("[data-service=\"youtube-login\"]")?.addEventListener("click",youtubeLogin)}
-function newPlaylist(){const n=prompt("Playlist name");if(!n)return;state.playlists[n]=[];save();render();msg("Playlist created")}
+function newPlaylist(){const n=prompt("Playlist name");if(!n)return;state.playlists[n]=[];save();haptic("MEDIUM");render();msg("Playlist created")}
 function importFiles(){picker.click()}
-picker.onchange=e=>{[...e.target.files].forEach(f=>{const id=Date.now()+Math.floor(Math.random()*999);const src=URL.createObjectURL(f);urls.push(src);const s={id,title:f.name.replace(/\.[^.]+$/,""),artist:"Local file",album:"Imported",genre:"Local",duration:0,src,color:"linear-gradient(145deg,#171713,#b48b32)"};songs.push(s);const a=new Audio(src);a.onloadedmetadata=()=>s.duration=a.duration});picker.value="";render();msg("Music added to ISAI")}
-audio.ontimeupdate=progress;audio.onloadedmetadata=progress;audio.onended=()=>state.repeat==="one"?load(state.current):next();
+picker.onchange=e=>{[...e.target.files].forEach(f=>{const id="local-"+Date.now()+"-"+Math.floor(Math.random()*999);const src=URL.createObjectURL(f);urls.push(src);const s={id,title:f.name.replace(/\.[^.]+$/,""),artist:"Local file",album:"Imported",genre:"Local",duration:0,src,color:"linear-gradient(145deg,#171713,#b48b32)"};songs.push(s);const a=new Audio(src);a.onloadedmetadata=()=>s.duration=a.duration});picker.value="";render();msg("Music added to ISAI")}
+async function handleEnded(){
+  if(!state.current)return;
+  if(state.repeat==="one"){await load(state.current);return}
+  if(state.repeat==="off"){state.playing=false;save();updateMini();if(document.querySelector(".player"))player();return}
+  next()
+}
+audio.ontimeupdate=progress;audio.onloadedmetadata=progress;audio.onended=handleEnded;
 function wire(root=document){
 root.querySelectorAll("[data-page]").forEach(x=>x.onclick=()=>setPage(x.dataset.page));
-root.querySelectorAll("[data-song]").forEach(x=>x.onclick=()=>openPlayer(+x.dataset.song));
-root.querySelectorAll("[data-fav]").forEach(x=>x.onclick=e=>{e.stopPropagation();toggleFav(+x.dataset.fav)});
+root.querySelectorAll("[data-song]").forEach(x=>x.onclick=()=>openPlayer(x.dataset.song));
+root.querySelectorAll("[data-fav]").forEach(x=>x.onclick=e=>{e.stopPropagation();toggleFav(x.dataset.fav)});
 root.querySelectorAll("[data-playlist]").forEach(x=>x.onclick=()=>showPlaylist(x.dataset.playlist));
-root.querySelectorAll("[data-more]").forEach(x=>x.onclick=e=>{e.stopPropagation();const s=songs.find(v=>v.id===+x.dataset.more);modal(s.title,'<div class="setting"><div><b>Play now</b><span>Start immediately</span></div><button class="more" data-play="'+s.id+'">▶</button></div><div class="setting"><div><b>Add to queue</b><span>Play after current queue</span></div><button class="more" data-add="'+s.id+'">＋</button></div>')});
-root.querySelectorAll("[data-play]").forEach(x=>x.onclick=()=>{document.querySelector(".modal")?.remove();openPlayer(+x.dataset.play)});
-root.querySelectorAll("[data-add]").forEach(x=>x.onclick=()=>{state.queue.push(+x.dataset.add);save();document.querySelector(".modal")?.remove();msg("Added to queue")});
+root.querySelectorAll("[data-more]").forEach(x=>x.onclick=e=>{e.stopPropagation();const s=songs.find(v=>String(v.id)===String(x.dataset.more));modal(s.title,'<div class="setting"><div><b>Play now</b><span>Start immediately</span></div><button class="more" data-play="'+s.id+'">▶</button></div><div class="setting"><div><b>Add to queue</b><span>Play after current queue</span></div><button class="more" data-add="'+s.id+'">＋</button></div>')});
+root.querySelectorAll("[data-play]").forEach(x=>x.onclick=()=>{document.querySelector(".modal")?.remove();openPlayer(x.dataset.play)});
+root.querySelectorAll("[data-add]").forEach(x=>x.onclick=()=>{state.queue.push(x.dataset.add);save();document.querySelector(".modal")?.remove();msg("Added to queue")});
 root.querySelectorAll("[data-action]").forEach(x=>{const a=x.dataset.action;const fn={home:()=>setPage("home"),search:()=>setPage("explore"),"toggle-theme":()=>{state.theme=state.theme==="dark"?"light":"dark";save();render()},import:importFiles,"open-player":()=>state.current&&player(),play:togglePlay,previous,next,shuffle,repeat,queue,lyrics,equalizer:eq,sleep,speed,favorites,history,services,"new-playlist":newPlaylist,"shuffle-toggle":()=>{state.shuffle=!state.shuffle;save();render()},close:()=>document.querySelector(".modal")?.remove()}[a];if(fn)x.onclick=fn});
 root.querySelectorAll("[data-genre]").forEach(x=>x.onclick=()=>{root.querySelectorAll(".chip").forEach(c=>c.classList.remove("active"));x.classList.add("active");const g=x.dataset.genre;document.querySelector("#results").innerHTML=(g==="All"?songs:songs.filter(s=>s.genre===g)).map(row).join("");wire()});
 const search=root.querySelector("#search");if(search)search.oninput=e=>{const q=e.target.value.toLowerCase();document.querySelector("#results").innerHTML=songs.filter(s=>(s.title+" "+s.artist+" "+s.album+" "+s.genre).toLowerCase().includes(q)).map(row).join("")||'<div class="empty">No matches found.</div>';wire()}
 }
 setInterval(()=>{if(state.sleepUntil&&Date.now()>=state.sleepUntil){state.sleepUntil=0;save();if(!audio.paused){audio.pause();state.playing=false;updateMini();if(document.querySelector(".player"))player();msg("Sleep timer ended")}}},1000);audio.volume=state.volume;document.querySelectorAll(".nav").forEach(x=>x.onclick=()=>setPage(x.dataset.page));finishSpotifyLogin();finishYouTubeLogin();render();initNativeMusic();setInterval(()=>{if(nativeLibraryReady&&state.current&&state.playing)progress()},1000);
+
+/* ISAI mobile interaction layer: gestures + haptic feedback */
+const touchState={kind:null,x:0,y:0,moved:false,longPress:false,timer:null};
+function clearTouchTimer(){if(touchState.timer){clearTimeout(touchState.timer);touchState.timer=null}}
+function gestureOpenPlaylist(){if(state.current){haptic("MEDIUM");player()}}
+function installMobileInteractions(){
+  if(window.__isaiMobileInteractions)return;
+  window.__isaiMobileInteractions=true;
+  document.addEventListener("click",e=>{if(e.target.closest("button"))haptic("LIGHT")},true);
+  document.addEventListener("touchstart",e=>{
+    if(e.touches.length!==1)return;
+    const point=e.touches[0],target=e.target;
+    const miniTarget=target.closest(".mini");
+    const playerTarget=target.closest(".player");
+    const songTarget=target.closest(".song");
+    clearTouchTimer();
+    touchState.kind=null;touchState.moved=false;touchState.longPress=false;
+    touchState.x=point.clientX;touchState.y=point.clientY;
+    if(miniTarget){
+      touchState.kind="mini";
+      return;
+    }
+    if(playerTarget&&!target.closest("button,input,.tools,.progress")){
+      touchState.kind="player";
+      return;
+    }
+    if(songTarget&&!target.closest("button,input")){
+      touchState.kind="song";
+      touchState.timer=setTimeout(()=>{
+        touchState.longPress=true;
+        const id=songTarget.dataset.song;
+        const song=songs.find(v=>String(v.id)===String(id));
+        if(song){haptic("MEDIUM");modal(song.title,'<div class="setting"><div><b>Play now</b><span>Start immediately</span></div><button class="more" data-play="'+esc(String(song.id))+'">▶</button></div><div class="setting"><div><b>Add to queue</b><span>Play after current queue</span></div><button class="more" data-add="'+esc(String(song.id))+'">＋</button></div>')}
+      },550);
+    }
+  },{passive:true});
+  document.addEventListener("touchmove",e=>{
+    if(!touchState.kind||e.touches.length!==1)return;
+    const point=e.touches[0],dx=point.clientX-touchState.x,dy=point.clientY-touchState.y;
+    if(Math.abs(dx)>10||Math.abs(dy)>10){touchState.moved=true;clearTouchTimer()}
+    if(touchState.kind==="mini"&&Math.abs(dy)>20&&Math.abs(dy)>Math.abs(dx)*1.15)e.preventDefault();
+    if(touchState.kind==="player"&&Math.abs(dx)>20&&Math.abs(dx)>Math.abs(dy)*1.15)e.preventDefault();
+    if(touchState.kind==="player"&&dy>20&&dy>Math.abs(dx)*1.15)e.preventDefault();
+  },{passive:false});
+  document.addEventListener("touchend",e=>{
+    if(!touchState.kind)return;
+    const dx=(e.changedTouches[0]?.clientX||touchState.x)-touchState.x;
+    const dy=(e.changedTouches[0]?.clientY||touchState.y)-touchState.y;
+    const kind=touchState.kind,moved=touchState.moved,longPress=touchState.longPress;
+    clearTouchTimer();
+    touchState.kind=null;
+    if(longPress){e.preventDefault();return}
+    if(Math.max(Math.abs(dx),Math.abs(dy))<55)return;
+    if(kind==="mini"&&dy<-55){gestureOpenPlaylist();return}
+    if(kind==="player"&&dy>65){haptic("LIGHT");setPage("home");return}
+    if(kind==="player"&&Math.abs(dx)>65&&Math.abs(dx)>Math.abs(dy)*1.15){
+      if(dx<0)next();else previous();
+    }
+  },{passive:false});
+  document.addEventListener("touchcancel",()=>{clearTouchTimer();touchState.kind=null}, {passive:true});
+}
+installMobileInteractions();
