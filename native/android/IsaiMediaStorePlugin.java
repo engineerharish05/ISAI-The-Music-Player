@@ -1,6 +1,9 @@
 package com.rishinnovations.isai;
 
 import android.Manifest;
+import android.content.Context;
+import android.content.Intent;
+import android.os.Build;
 import android.content.ContentResolver;
 import android.database.Cursor;
 import android.net.Uri;
@@ -33,6 +36,30 @@ import java.io.InputStream;
     }
 )
 public class IsaiMediaStorePlugin extends Plugin {
+    @PluginMethod
+    public void startPlaybackService(PluginCall call) {
+        try {
+            Intent intent = new Intent(getContext(), IsaiPlaybackService.class);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                getContext().startForegroundService(intent);
+            } else {
+                getContext().startService(intent);
+            }
+            call.resolve();
+        } catch (Exception error) {
+            call.reject("Unable to start playback service: " + error.getMessage(), null, error);
+        }
+    }
+
+    @PluginMethod
+    public void stopPlaybackService(PluginCall call) {
+        try {
+            getContext().stopService(new Intent(getContext(), IsaiPlaybackService.class));
+            call.resolve();
+        } catch (Exception error) {
+            call.reject("Unable to stop playback service: " + error.getMessage(), null, error);
+        }
+    }
     @PluginMethod
     public void scan(PluginCall call) {
         if (getPermissionState("audio") != PermissionState.GRANTED) {
@@ -77,7 +104,8 @@ public class IsaiMediaStorePlugin extends Plugin {
             }
         }
 
-        File target = new File(cacheDir, "isai-current" + extension);
+        String safeId = Integer.toHexString(uriValue.hashCode());
+        File target = new File(cacheDir, "isai-" + safeId + extension);
 
         try (InputStream input = resolver.openInputStream(source);
              FileOutputStream output = new FileOutputStream(target, false)) {
