@@ -1,14 +1,8 @@
-const seed=[
-{id:1,title:"Midnight Architecture",artist:"ISAI Demo",album:"Digital Tamil",genre:"Electronic",duration:252,color:"linear-gradient(145deg,#161611,#b58b34)"},
-{id:2,title:"Lavender Signal",artist:"ISAI Demo",album:"Digital Tamil",genre:"Ambient",duration:218,color:"linear-gradient(145deg,#30221b,#c79a45)"},
-{id:3,title:"நிலா",artist:"ISAI Demo",album:"Tamil Geometry",genre:"Tamil",duration:236,color:"linear-gradient(145deg,#182b27,#a98236)"},
-{id:4,title:"Zero Latency",artist:"ISAI Demo",album:"System",genre:"Electronic",duration:201,color:"linear-gradient(145deg,#251d14,#c1783f)"},
-{id:5,title:"Purple Circuit",artist:"ISAI Demo",album:"System",genre:"Synthwave",duration:224,color:"linear-gradient(145deg,#211c2d,#9e7bba)"},
-{id:6,title:"அலை",artist:"ISAI Demo",album:"Tamil Geometry",genre:"Tamil",duration:198,color:"linear-gradient(145deg,#132d28,#5da88e)"}];
+const seed=[];
 
 let saved={};
 try{saved=JSON.parse(localStorage.getItem("isai-state")||"{}")||{}}catch(error){console.warn("ISAI state reset:",error);localStorage.removeItem("isai-state")}
-const state={page:"home",playerOrigin:"home",theme:saved.theme||"dark",current:null,playing:false,shuffle:!!saved.shuffle,repeat:saved.repeat||"all",haptics:saved.haptics!==false,gestures:saved.gestures!==false,favorites:new Set(saved.favorites||[]),history:saved.history||[],queue:saved.queue||[],speed:saved.speed||1,volume:saved.volume??1,sleepUntil:saved.sleepUntil||0,playlists:saved.playlists||{"Liked Songs":[],"Tamil Essentials":[3,6]}};
+const state={page:"home",playerOrigin:"home",theme:saved.theme||"dark",current:null,playing:false,shuffle:!!saved.shuffle,repeat:saved.repeat||"all",haptics:saved.haptics!==false,gestures:saved.gestures!==false,favorites:new Set(saved.favorites||[]),history:saved.history||[],queue:saved.queue||[],speed:saved.speed||1,volume:saved.volume??1,sleepUntil:saved.sleepUntil||0,playlists:saved.playlists||{"Liked Songs":[]}};
 let songs=[...seed],urls=[];
 const nativePlugins=window.Capacitor?.Plugins||{};
 const mediaStore=nativePlugins.IsaiMediaStore||null;
@@ -99,8 +93,8 @@ const view=document.querySelector("#view"),audio=document.querySelector("#audio"
 const save=()=>localStorage.setItem("isai-state",JSON.stringify({...state,favorites:[...state.favorites]}));
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const fmt=s=>Number.isFinite(s)?Math.floor(s/60)+":"+String(Math.floor(s%60)).padStart(2,"0"):"0:00";
-const art=s=>s.cover?'<div class="song-art"><img src="'+s.cover+'" alt=""></div>':'<div class="song-art" style="background:'+s.color+'">♫</div>';
-const albumArt=s=>s.cover?'<div class="album-art"><img src="'+s.cover+'" alt=""></div>':'<div class="album-art" style="background:'+s.color+'">♫</div>';
+const art=s=>s?s.cover?'<div class="song-art"><img src="'+s.cover+'" alt=""></div>':'<div class="song-art" style="background:'+s.color+'">♫</div>';
+const albumArt=s=>s?s.cover?'<div class="album-art"><img src="'+s.cover+'" alt=""></div>':'<div class="album-art" style="background:'+s.color+'">♫</div>';
 function msg(t){toast.textContent=t;toast.classList.add("show");clearTimeout(window.tt);window.tt=setTimeout(()=>toast.classList.remove("show"),1600)}
 function setPage(p){state.page=p;render()}
 function row(s){return '<div class="song" data-song="'+esc(String(s.id))+'">'+art(s)+'<div class="song-info"><b>'+esc(s.title)+'</b><span>'+esc(s.artist)+" · "+esc(s.album)+" · "+fmt(s.duration)+'</span></div><button class="heart '+(state.favorites.has(s.id)?"active":"")+'" data-fav="'+s.id+'">'+(state.favorites.has(s.id)?"♥":"♡")+'</button><button class="more" data-more="'+s.id+'">⋯</button></div>'}
@@ -111,10 +105,10 @@ function render(){
 function home(){
 const recent=state.history.map(id=>songs.find(s=>s.id===id)).filter(Boolean).slice(0,6);
 const albums=[...new Map(songs.map(s=>[s.album,s])).values()];
-view.innerHTML='<section class="hero card"><div class="eyebrow">ISAI - The Music Experience</div><h1>Your Day,<br><span class="hero-line">Your Moments,</span><br>Your Isai</h1><p>A Refined Music Experience Designed Around The Songs You Love.</p><div class="hero-actions"><button class="pill primary" data-song="'+songs[0].id+'">▶ Listen now</button><button class="pill ghost" data-action="import">＋ Add music</button></div></section>'+
+view.innerHTML='<section class="hero card"><div class="eyebrow">ISAI - The Music Experience</div><h1>Your Day,<br><span class="hero-line">Your Moments,</span><br>Your Isai</h1><p>'+(songs.length?'A Refined Music Experience Designed Around The Songs You Love.':'Your library is ready. Add your own music to start listening.')+'</p><div class="hero-actions">'+(songs.length?'<button class="pill primary" data-song="'+songs[0].id+'">▶ Listen now</button>':'<button class="pill primary" data-action="import">＋ Add music</button>')+'<button class="pill ghost" data-action="import">＋ Import audio</button></div></section>'+
 '<section class="section"><div class="row"><h2>Quick access</h2><button class="more" data-page="library">See all</button></div><div class="quick"><button class="card quick-card" data-page="library"><strong>'+songs.length+'</strong><span>Songs</span></button><button class="card quick-card" data-action="favorites"><strong>♥ '+state.favorites.size+'</strong><span>Liked songs</span></button><button class="card quick-card" data-page="playlists"><strong>'+Object.keys(state.playlists).length+'</strong><span>Playlists</span></button><button class="card quick-card" data-action="history"><strong>◷ '+state.history.length+'</strong><span>History</span></button></div></section>'+
-'<section class="section"><div class="row"><h2>Albums & collections</h2></div><div class="shelf">'+albums.map(s=>'<button class="album-card" data-song="'+s.id+'">'+albumArt(s)+'<b>'+esc(s.album)+'</b><span>'+esc(s.artist)+'</span></button>').join("")+'</div></section>'+
-'<section class="section"><div class="row"><h2>'+(recent.length?"Continue listening":"Recently added")+'</h2></div><div class="card list">'+(recent.length?recent:songs).slice(0,6).map(row).join("")+'</div></section>'+
+'<section class="section"><div class="row"><h2>Albums & collections</h2></div>'+(albums.length?'<div class="shelf">'+albums.map(s=>'<button class="album-card" data-song="'+s.id+'">'+albumArt(s)+'<b>'+esc(s.album)+'</b><span>'+esc(s.artist)+'</span></button>').join("")+'</div>':'<div class="card empty">Your albums will appear here after you import music.</div>')+'</section>'+
+'<section class="section"><div class="row"><h2>'+(recent.length?"Continue listening":"Recently added")+'</h2></div>'+(songs.length?'<div class="card list">'+(recent.length?recent:songs).slice(0,6).map(row).join("")+'</div>':'<div class="card empty">No music in your library yet.</div>')+'</section>'+
 '<section class="section card banner"><b><span class="dot"></span>ISAI local-first mode</b><p>Import your own audio and use the player, queue, favorites, playlists, theme and playback controls without an account.</p></section>';
 wire()
 }
@@ -227,7 +221,8 @@ function services(){const c=serviceConfig(),sp=!!localStorage.getItem("isai-spot
 function newPlaylist(){const n=prompt("Playlist name");if(!n)return;state.playlists[n]=[];save();haptic("MEDIUM");render();msg("Playlist created")}
 function importFiles(){picker.click()}
 picker.onchange=e=>{
-  const files=[...e.target.files];
+  const files=[...e.target.files].filter(f=>f.type.startsWith("audio/") || /\.(mp3|m4a|aac|wav|ogg|flac|opus|webm)$/i.test(f.name));
+  if(!files.length){picker.value="";msg("Choose an audio file");return;}
   files.forEach(f=>{
     const id="local-"+Date.now()+"-"+Math.floor(Math.random()*999999);
     const src=URL.createObjectURL(f);
