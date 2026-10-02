@@ -23,6 +23,13 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Prepare web bundle
+        run: |
+          rm -rf www
+          mkdir -p www/assets
+          cp index.html style.css app.js www/
+          cp assets/isai-logo.jpg www/assets/
+
       - name: Create Android project
         run: npx cap add android
 
