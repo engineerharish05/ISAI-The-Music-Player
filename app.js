@@ -9,6 +9,37 @@ const seed=[
 const saved=JSON.parse(localStorage.getItem("isai-state")||"{}");
 const state={page:"home",theme:saved.theme||"dark",current:null,playing:false,shuffle:!!saved.shuffle,repeat:saved.repeat||"all",favorites:new Set(saved.favorites||[]),history:saved.history||[],queue:saved.queue||[],speed:saved.speed||1,volume:saved.volume??1,sleepUntil:saved.sleepUntil||0,playlists:saved.playlists||{"Liked Songs":[],"Tamil Essentials":[3,6]}};
 let songs=[...seed],urls=[];
+const nativePlugins=window.Capacitor?.Plugins||{};
+const mediaStore=nativePlugins.CapacitorMediaStore||null;
+const nativeAudio=nativePlugins.NativeAudio||null;
+let nativeLibraryReady=false;
+let nativeAssetId=null;
+
+async function initNativeMusic(){
+  if(!mediaStore)return;
+  try{
+    const permission=await mediaStore.requestPermissions({types:["audio"]});
+    if(permission?.audio==="denied")return;
+    const result=await mediaStore.getMediasByType({mediaType:"audio",sortBy:"TITLE",includeExternal:true});
+    const local=(result?.media||[]).map(m=>({
+      id:"local-"+m.id,title:m.title||m.displayName||"Unknown track",
+      artist:m.artist||"Unknown artist",album:m.album||"Unknown album",
+      genre:m.genre||"Local",duration:Number(m.duration||0)/1000,src:m.uri,
+      cover:m.albumArtUri||"",color:"linear-gradient(145deg,#171713,#b48b32)"
+    }));
+    if(local.length){songs=local;state.queue=songs.map(s=>s.id);nativeLibraryReady=true;save();render()}
+    if(nativeAudio){await nativeAudio.configure({background:true,focus:true,showNotification:true});nativeAudio.addListener?.("complete",()=>next())}
+  }catch(error){console.warn("ISAI native music initialization failed:",error)}
+}
+async function nativeLoad(s){
+  if(!nativeAudio||!s?.src)return false;
+  try{
+    if(nativeAssetId){try{await nativeAudio.stop({assetId:nativeAssetId})}catch(_){}try{await nativeAudio.unload({assetId:nativeAssetId})}catch(_){}}
+    nativeAssetId=String(s.id);
+    await nativeAudio.preload({assetId:nativeAssetId,assetPath:s.src,isUrl:true,notificationMetadata:{title:s.title,artist:s.artist,album:s.album,artworkUrl:s.cover||""}});
+    await nativeAudio.play({assetId:nativeAssetId});return true;
+  }catch(error){console.warn("ISAI native playback failed; using Web Audio fallback:",error);nativeAssetId=null;return false}
+}
 const view=document.querySelector("#view"),audio=document.querySelector("#audio"),picker=document.querySelector("#filePicker"),mini=document.querySelector("#miniPlayer"),toast=document.querySelector("#toast");
 const save=()=>localStorage.setItem("isai-state",JSON.stringify({...state,favorites:[...state.favorites]}));
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -55,11 +86,11 @@ view.innerHTML='<div class="eyebrow">Settings</div><h1>Make ISAI yours.</h1>'+
 wire()
 }
 function openPlayer(id){const s=songs.find(x=>x.id===id);if(!s)return;state.current=s;state.playing=true;state.history=[id,...state.history.filter(x=>x!==id)].slice(0,30);if(!state.queue.length)state.queue=songs.map(x=>x.id);save();load(s);player();updateMini()}
-function load(s){if(!s.src){audio.removeAttribute("src");audio.load();return}audio.src=s.src;audio.volume=state.volume;audio.playbackRate=state.speed;audio.play().catch(()=>state.playing=false)}
-function player(){const s=state.current;if(!s)return;view.innerHTML='<div class="player"><button class="back" data-page="home">‹ Back</button><div class="big-cover" style="background:'+s.color+'">'+(s.cover?'<img src="'+s.cover+'" alt="">':"♫")+'</div><div class="player-title">'+esc(s.title)+'</div><div class="player-artist">'+esc(s.artist)+" · "+esc(s.album)+'</div><div class="progress"><input id="seek" type="range" min="0" max="'+Math.max(1,s.duration)+'" value="'+Math.floor(audio.currentTime||0)+'"><div class="times"><span id="cur">'+fmt(audio.currentTime)+'</span><span id="dur">'+fmt(audio.duration||s.duration)+'</span></div></div><div class="controls"><button class="control" data-action="shuffle">⤨</button><button class="control" data-action="previous">‹</button><button class="control main" data-action="play">'+(state.playing?"Ⅱ":"▶")+'</button><button class="control" data-action="next">›</button><button class="control" data-action="repeat">↻</button></div><div class="tools"><button class="chip" data-action="lyrics">Lyrics</button><button class="chip" data-action="queue">Queue</button><button class="chip" data-action="equalizer">EQ</button><button class="chip" data-action="sleep">Sleep</button></div></div>';wire();document.querySelector("#seek").oninput=e=>{audio.currentTime=+e.target.value;progress()}}
-function progress(){const s=document.querySelector("#seek");if(s)s.value=audio.currentTime;const c=document.querySelector("#cur");if(c)c.textContent=fmt(audio.currentTime);const d=document.querySelector("#dur");if(d)d.textContent=fmt(audio.duration||state.current?.duration)}
+async function load(s){if(nativeLibraryReady&&s.src){const ok=await nativeLoad(s);if(ok)return}if(!s.src){audio.removeAttribute("src");audio.load();return}audio.src=s.src;audio.volume=state.volume;audio.playbackRate=state.speed;audio.play().catch(()=>state.playing=false)}
+function player(){const s=state.current;if(!s)return;view.innerHTML='<div class="player"><button class="back" data-page="home">‹ Back</button><div class="big-cover" style="background:'+s.color+'">'+(s.cover?'<img src="'+s.cover+'" alt="">':"♫")+'</div><div class="player-title">'+esc(s.title)+'</div><div class="player-artist">'+esc(s.artist)+" · "+esc(s.album)+'</div><div class="progress"><input id="seek" type="range" min="0" max="'+Math.max(1,s.duration)+'" value="'+Math.floor(audio.currentTime||0)+'"><div class="times"><span id="cur">'+fmt(audio.currentTime)+'</span><span id="dur">'+fmt(audio.duration||s.duration)+'</span></div></div><div class="controls"><button class="control" data-action="shuffle">⤨</button><button class="control" data-action="previous">‹</button><button class="control main" data-action="play">'+(state.playing?"Ⅱ":"▶")+'</button><button class="control" data-action="next">›</button><button class="control" data-action="repeat">↻</button></div><div class="tools"><button class="chip" data-action="lyrics">Lyrics</button><button class="chip" data-action="queue">Queue</button><button class="chip" data-action="equalizer">EQ</button><button class="chip" data-action="sleep">Sleep</button></div></div>';wire();document.querySelector("#seek").oninput=async e=>{const value=+e.target.value;if(nativeLibraryReady&&nativeAudio&&nativeAssetId){try{await nativeAudio.setCurrentTime({assetId:nativeAssetId,time:value})}catch(error){console.warn("Native seek failed:",error)}}else{audio.currentTime=value}progress()}}
+async function progress(){let current=audio.currentTime;if(nativeLibraryReady&&nativeAudio&&nativeAssetId){try{current=(await nativeAudio.getCurrentTime({assetId:nativeAssetId})).currentTime||0}catch(_){}}const s=document.querySelector("#seek");if(s)s.value=current;const c=document.querySelector("#cur");if(c)c.textContent=fmt(current);const d=document.querySelector("#dur");if(d)d.textContent=fmt(audio.duration||state.current?.duration)}
 function updateMini(){if(!state.current){mini.classList.add("hidden");return}mini.classList.remove("hidden");document.querySelector("#miniTitle").textContent=state.current.title;document.querySelector("#miniArtist").textContent=state.current.artist;document.querySelector("#miniPlay").textContent=state.playing?"Ⅱ":"▶"}
-function togglePlay(){if(!state.current){openPlayer(songs[0].id);return}if(state.playing){audio.pause();state.playing=false}else{state.playing=true;if(state.current.src)audio.play().catch(()=>state.playing=false)}updateMini();if(document.querySelector(".player"))player()}
+async function togglePlay(){if(!state.current){openPlayer(songs[0].id);return}if(nativeLibraryReady&&nativeAudio&&nativeAssetId){try{if(state.playing){await nativeAudio.pause({assetId:nativeAssetId});state.playing=false}else{await nativeAudio.resume({assetId:nativeAssetId});state.playing=true}}catch(error){console.warn("Native toggle failed:",error)}}else if(state.playing){audio.pause();state.playing=false}else{state.playing=true;if(state.current.src)audio.play().catch(()=>state.playing=false)}updateMini();if(document.querySelector(".player"))player()}
 function next(){if(!songs.length)return;let i=songs.findIndex(x=>x.id===state.current?.id);let s=state.shuffle?songs[Math.floor(Math.random()*songs.length)]:songs[(i+1+songs.length)%songs.length];openPlayer(s.id)}
 function previous(){if(audio.currentTime>5){audio.currentTime=0;return}let i=songs.findIndex(x=>x.id===state.current?.id);openPlayer(songs[(i-1+songs.length)%songs.length].id)}
 function toggleFav(id){state.favorites.has(id)?state.favorites.delete(id):state.favorites.add(id);state.playlists["Liked Songs"]=[...state.favorites];save();render()}
@@ -90,4 +121,4 @@ root.querySelectorAll("[data-action]").forEach(x=>{const a=x.dataset.action;cons
 root.querySelectorAll("[data-genre]").forEach(x=>x.onclick=()=>{root.querySelectorAll(".chip").forEach(c=>c.classList.remove("active"));x.classList.add("active");const g=x.dataset.genre;document.querySelector("#results").innerHTML=(g==="All"?songs:songs.filter(s=>s.genre===g)).map(row).join("");wire()});
 const search=root.querySelector("#search");if(search)search.oninput=e=>{const q=e.target.value.toLowerCase();document.querySelector("#results").innerHTML=songs.filter(s=>(s.title+" "+s.artist+" "+s.album+" "+s.genre).toLowerCase().includes(q)).map(row).join("")||'<div class="empty">No matches found.</div>';wire()}
 }
-setInterval(()=>{if(state.sleepUntil&&Date.now()>=state.sleepUntil){state.sleepUntil=0;save();if(!audio.paused){audio.pause();state.playing=false;updateMini();if(document.querySelector(".player"))player();msg("Sleep timer ended")}}},1000);audio.volume=state.volume;document.querySelectorAll(".nav").forEach(x=>x.onclick=()=>setPage(x.dataset.page));render();
+setInterval(()=>{if(state.sleepUntil&&Date.now()>=state.sleepUntil){state.sleepUntil=0;save();if(!audio.paused){audio.pause();state.playing=false;updateMini();if(document.querySelector(".player"))player();msg("Sleep timer ended")}}},1000);audio.volume=state.volume;document.querySelectorAll(".nav").forEach(x=>x.onclick=()=>setPage(x.dataset.page));render();initNativeMusic();setInterval(()=>{if(nativeLibraryReady&&state.current&&state.playing)progress()},1000);
