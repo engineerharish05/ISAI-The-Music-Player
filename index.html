@@ -6,6 +6,7 @@
 <meta name="theme-color" content="#0a0a09">
 <meta name="description" content="ISAI — The Music Player">
 <link rel="icon" type="image/jpeg" href="assets/isai-logo.jpg">
+<link rel="manifest" href="manifest.webmanifest">
 <link rel="stylesheet" href="style.css">
 <title>ISAI — The Music Player</title>
 </head>
@@ -41,5 +42,6 @@
 <input id="filePicker" type="file" accept="audio/*" multiple hidden>
 <audio id="audio" preload="metadata"></audio>
 <script src="app.js"></script>
+<script>if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(() => {}));</script>
 </body>
 </html>
