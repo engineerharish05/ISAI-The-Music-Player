@@ -24,12 +24,12 @@
   <section id="miniPlayer" class="mini hidden">
     <button class="mini-cover" data-action="open-player">♫</button>
     <button class="mini-info" data-action="open-player"><b id="miniTitle">Nothing playing</b><span id="miniArtist">Choose a song</span></button>
-    <button class="mini-btn" data-action="previous">‹</button>
-    <button class="mini-main" id="miniPlay" data-action="play">▶</button>
-    <button class="mini-btn" data-action="next">›</button>
+    <button class="mini-btn" data-action="previous" aria-label="Previous track">‹</button>
+    <button class="mini-main" id="miniPlay" data-action="play" aria-label="Play or pause">▶</button>
+    <button class="mini-btn" data-action="next" aria-label="Next track">›</button>
   </section>
 
-  <nav class="bottom">
+  <nav class="bottom" aria-label="Primary navigation">
     <button class="nav active" data-page="home"><i>⌂</i><span>Home</span></button>
     <button class="nav" data-page="explore"><i>⌕</i><span>Explore</span></button>
     <button class="nav" data-page="library"><i>♫</i><span>Library</span></button>
