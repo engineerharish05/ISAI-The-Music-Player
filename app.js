@@ -265,7 +265,21 @@ close:()=>document.querySelector(".modal")?.remove()}[a];if(fn)x.onclick=fn});
 root.querySelectorAll("[data-genre]").forEach(x=>x.onclick=()=>{root.querySelectorAll(".chip").forEach(c=>c.classList.remove("active"));x.classList.add("active");const g=x.dataset.genre;document.querySelector("#results").innerHTML=(g==="All"?songs:songs.filter(s=>s.genre===g)).map(row).join("");wire()});
 const search=root.querySelector("#search");if(search)search.oninput=e=>{const q=e.target.value.toLowerCase();document.querySelector("#results").innerHTML=songs.filter(s=>(s.title+" "+s.artist+" "+s.album+" "+s.genre).toLowerCase().includes(q)).map(row).join("")||'<div class="empty">No matches found.</div>';wire()}
 }
-setInterval(()=>{if(state.sleepUntil&&Date.now()>=state.sleepUntil){state.sleepUntil=0;save();if(!audio.paused){audio.pause();state.playing=false;updateMini();if(document.querySelector(".player"))player();msg("Sleep timer ended")}}},1000);audio.volume=state.volume;document.querySelectorAll(".nav").forEach(x=>x.onclick=()=>setPage(x.dataset.page));finishSpotifyLogin();finishYouTubeLogin();render();initNativeMusic();setInterval(()=>{if(nativeLibraryReady&&state.current&&state.playing)progress()},1000);
+setInterval(async ()=>{
+  if(state.sleepUntil&&Date.now()>=state.sleepUntil){
+    state.sleepUntil=0;
+    save();
+    if(nativeLibraryReady&&nativeAudio&&nativeAssetId){
+      try{await nativeAudio.pause({assetId:nativeAssetId})}catch(_){}
+    }else if(!audio.paused){
+      audio.pause();
+    }
+    state.playing=false;
+    updateMini();
+    if(document.querySelector(".player"))player();
+    msg("Sleep timer ended");
+  }
+},1000);audio.volume=state.volume;document.querySelectorAll(".nav").forEach(x=>x.onclick=()=>setPage(x.dataset.page));finishSpotifyLogin();finishYouTubeLogin();render();initNativeMusic();setInterval(()=>{if(nativeLibraryReady&&state.current&&state.playing)progress()},1000);
 
 /* ISAI mobile interaction layer: gestures + haptic feedback */
 const touchState={kind:null,x:0,y:0,moved:false,longPress:false,timer:null};
