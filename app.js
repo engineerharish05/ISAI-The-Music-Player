@@ -44,6 +44,7 @@ async function initNativeMusic(){
         duration:Number(m.duration||0)/1000,
         src:m.uri,
         cover:"",
+        displayName:m.displayName||"track.mp3",
         color:"linear-gradient(145deg,#171713,#b48b32)"
       })).filter(s=>s.src);
       if(local.length){
@@ -66,18 +67,19 @@ async function initNativeMusic(){
   }
 }
 async function nativeLoad(s){
-  if(!nativeAudio||!s?.src)return false;
+  if(!nativeAudio||!mediaStore||!s?.src)return false;
   try{
     if(nativeAssetId){
       try{await nativeAudio.stop({assetId:nativeAssetId})}catch(_){}
       try{await nativeAudio.unload({assetId:nativeAssetId})}catch(_){}
       nativeAssetId=null;
     }
+    const prepared=await mediaStore.prepare({uri:s.src,displayName:s.displayName||"track.mp3"});
     const assetId="isai-"+String(s.id).replace(/[^a-zA-Z0-9_-]/g,"_");
     await nativeAudio.preload({
       assetId,
-      assetPath:s.src,
-      isUrl:false,
+      assetPath:prepared.uri,
+      isUrl:true,
       volume:state.volume,
       notificationMetadata:{title:s.title,artist:s.artist,album:s.album}
     });
@@ -155,7 +157,7 @@ async function load(s){
     updateMini();
     return;
   }
-  const playableSrc=String(s.src).startsWith("content://")&&window.Capacitor?.convertFileSrc
+  const playableSrc=window.Capacitor?.convertFileSrc
     ?window.Capacitor.convertFileSrc(s.src):s.src;
   audio.src=playableSrc;
   audio.volume=state.volume;
