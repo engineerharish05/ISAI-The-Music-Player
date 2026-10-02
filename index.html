@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#111018">
+  <title>ISAI — The Music Player</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo">இ</div>
+        <div><div class="brand-name">ISAI</div><div class="brand-sub">THE MUSIC PLAYER</div></div>
+      </div>
+      <button class="icon-btn" id="themeBtn" aria-label="Theme">◐</button>
+    </header>
+    <main id="view"></main>
+    <section class="mini-player hidden" id="miniPlayer">
+      <div class="mini-art" id="miniArt">♫</div>
+      <div class="mini-meta"><strong id="miniTitle">Nothing playing</strong><span id="miniArtist">Choose a song</span></div>
+      <button class="mini-btn" id="prevBtn">◀</button><button class="mini-btn play" id="playBtn">▶</button><button class="mini-btn" id="nextBtn">▶</button>
+    </section>
+    <nav class="bottom-nav">
+      <button data-page="home" class="nav active"><span>⌂</span>Home</button>
+      <button data-page="library" class="nav"><span>▦</span>Library</button>
+      <button data-page="search" class="nav"><span>⌕</span>Search</button>
+      <button data-page="playlists" class="nav"><span>≡</span>Playlists</button>
+      <button data-page="settings" class="nav"><span>⚙</span>Settings</button>
+    </nav>
+  </div>
+  <div class="toast" id="toast"></div>
+  <script src="app.js"></script>
+</body>
+</html>
