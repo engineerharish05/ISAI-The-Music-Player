@@ -90,5 +90,16 @@ const input=root.querySelector("#searchInput");if(input)input.oninput=e=>{state.
 function toggleTheme(){state.theme=state.theme==="dark"?"light":"dark";save();render()}
 document.querySelectorAll(".nav").forEach(x=>x.onclick=()=>setPage(x.dataset.page));
 audio.volume=state.volume;
-document.addEventListener("click",e=>{if(e.target.closest("#playBtn"))togglePlay();if(e.target.closest("#nextBtn"))next();if(e.target.closest("#prevBtn"))previous();});
+document.addEventListener("click",e=>{
+  const el=e.target.closest("[data-action]");
+  if(!el)return;
+  if(el.closest("#view")||el.closest(".modal-backdrop"))return;
+  const a=el.dataset.action;
+  if(a==="home")setPage("home");
+  else if(a==="search")openSearch();
+  else if(a==="toggle-theme")toggleTheme();
+  else if(a==="import")importFiles();
+  else if(a==="open-player"&&state.current)renderPlayer();
+});
+document.querySelectorAll(".nav").forEach(x=>x.onclick=()=>setPage(x.dataset.page));
 render();
