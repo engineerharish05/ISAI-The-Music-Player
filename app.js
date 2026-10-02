@@ -75,7 +75,7 @@ async function nativeLoad(s){
       nativeAssetId=null;
     }
     const prepared=await mediaStore.prepare({uri:s.src,displayName:s.displayName||"track.mp3"});
-    if(mediaStore?.startPlaybackService)await nativePlugins.IsaiPlaybackService.start();
+    await mediaStore?.startPlaybackService?.();
     const assetId="isai-"+String(s.id).replace(/[^a-zA-Z0-9_-]/g,"_");
     await nativeAudio.preload({
       assetId,
