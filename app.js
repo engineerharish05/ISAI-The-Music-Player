@@ -26,17 +26,23 @@ let nativeAssetId=null;
 
 async function initNativeMusic(){
   try{
-    const permission=await mediaStore.requestPermissions({types:["audio"]});
-    if(permission?.audio==="denied")return;
-    const result=await mediaStore.getMediasByType({mediaType:"audio",sortBy:"TITLE",includeExternal:true});
-    const local=(result?.media||[]).map(m=>({
-      id:"local-"+m.id,title:m.title||m.displayName||"Unknown track",
-      artist:m.artist||"Unknown artist",album:m.album||"Unknown album",
-      genre:m.genre||"Local",duration:Number(m.duration||0)/1000,src:m.uri,
-      cover:m.albumArtUri||"",color:"linear-gradient(145deg,#171713,#b48b32)"
-    }));
-    if(local.length){songs=local;state.queue=songs.map(s=>s.id);nativeLibraryReady=true;save();render()}
-    if(nativeAudio){await nativeAudio.configure({background:true,focus:true,showNotification:true});nativeAudio.addListener?.("complete",handleEnded)}
+    if(mediaStore){
+      const permission=await mediaStore.requestPermissions({types:["audio"]});
+      if(permission?.audio!=="denied"){
+        const result=await mediaStore.getMediasByType({mediaType:"audio",sortBy:"TITLE",includeExternal:true});
+        const local=(result?.media||[]).map(m=>({
+          id:"local-"+m.id,title:m.title||m.displayName||"Unknown track",
+          artist:m.artist||"Unknown artist",album:m.album||"Unknown album",
+          genre:m.genre||"Local",duration:Number(m.duration||0)/1000,src:m.uri,
+          cover:m.albumArtUri||"",color:"linear-gradient(145deg,#171713,#b48b32)"
+        }));
+        if(local.length){songs=local;state.queue=songs.map(s=>s.id);nativeLibraryReady=true;save();render()}
+      }
+    }
+    if(nativeAudio){
+      await nativeAudio.configure({background:true,focus:true,showNotification:true});
+      nativeAudio.addListener?.("complete",handleEnded);
+    }
   }catch(error){console.warn("ISAI native music initialization failed:",error)}
 }
 async function nativeLoad(s){
