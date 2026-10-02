@@ -45,6 +45,38 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync android
 
+      - name: Add native ISAI music bridge
+        shell: bash
+        run: |
+          JAVA_DIR="android/app/src/main/java/com/rishinnovations/isai"
+          mkdir -p "$JAVA_DIR"
+          cp native/android/IsaiMediaStorePlugin.java "$JAVA_DIR/IsaiMediaStorePlugin.java"
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("android/app/src/main/java/com/rishinnovations/isai/MainActivity.java")
+          s = p.read_text()
+          if "IsaiMediaStorePlugin" not in s:
+              s = s.replace(
+                  "import com.getcapacitor.BridgeActivity;",
+                  "import com.getcapacitor.BridgeActivity;\nimport android.os.Bundle;"
+              )
+              s = s.replace(
+                  "public class MainActivity extends BridgeActivity {}",
+                  """public class MainActivity extends BridgeActivity {
+              @Override
+              public void onCreate(Bundle savedInstanceState) {
+                  registerPlugin(IsaiMediaStorePlugin.class);
+                  super.onCreate(savedInstanceState);
+              }
+          }"""
+              )
+              s = s.replace(
+                  "import android.os.Bundle;",
+                  "import android.os.Bundle;\nimport com.rishinnovations.isai.IsaiMediaStorePlugin;"
+              )
+          p.write_text(s)
+          PY
+
       - name: Add Android media permissions
         shell: bash
         run: |
@@ -59,6 +91,11 @@ jobs:
               s = s.replace(marker, marker + perms, 1)
           p.write_text(s)
           PY
+
+      - name: Verify native bridge source
+        run: |
+          test -f android/app/src/main/java/com/rishinnovations/isai/IsaiMediaStorePlugin.java
+          grep -q 'registerPlugin(IsaiMediaStorePlugin.class)' android/app/src/main/java/com/rishinnovations/isai/MainActivity.java
 
       - name: Build debug APK
         working-directory: android
