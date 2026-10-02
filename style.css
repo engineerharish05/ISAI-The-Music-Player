@@ -128,3 +128,24 @@ body.dark .player .control.main{
 .heart:hover::before{
   color:var(--gold);
 }
+
+/* Mobile interaction foundation */
+html{overscroll-behavior-y:none}
+body{-webkit-tap-highlight-color:transparent}
+button{touch-action:manipulation;-webkit-touch-callout:none}
+.song{touch-action:pan-y}
+.mini{bottom:calc(78px + env(safe-area-inset-bottom) + 8px);touch-action:none}
+.player{touch-action:pan-y;overscroll-behavior:contain}
+.player .big-cover{touch-action:none}
+.bottom{height:calc(78px + env(safe-area-inset-bottom));padding-bottom:max(6px,env(safe-area-inset-bottom))}
+.app{padding-bottom:calc(104px + env(safe-area-inset-bottom))}
+.mini-btn{width:44px;height:44px}
+.mini-main{width:44px;height:44px}
+.heart{width:44px;height:44px}
+.nav{min-height:48px}
+@media(max-width:420px){
+  .hero{padding:24px}
+  .hero h1{font-size:31px}
+  .hero p{font-size:16px}
+  main{padding-left:16px;padding-right:16px}
+}
