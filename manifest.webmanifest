@@ -1,0 +1,11 @@
+{
+  "name": "ISAI — The Music Player",
+  "short_name": "ISAI",
+  "description": "A refined, local-first music player by Rish Innovations.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#090909",
+  "theme_color": "#0a0a09",
+  "orientation": "portrait-primary",
+  "icons": [{"src": "/assets/isai-logo.jpg","sizes": "512x512","type": "image/jpeg","purpose": "any maskable"}]
+}
