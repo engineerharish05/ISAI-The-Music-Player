@@ -149,3 +149,37 @@ button{touch-action:manipulation;-webkit-touch-callout:none}
   .hero p{font-size:16px}
   main{padding-left:16px;padding-right:16px}
 }
+
+/* ISAI mobile polish */
+button{user-select:none;-webkit-user-select:none}
+.topbar{padding-top:max(12px,env(safe-area-inset-top));height:calc(78px + env(safe-area-inset-top))}
+main{padding-bottom:34px}
+.hero{min-height:0;padding:26px}
+.hero p{font-size:16px}
+.hero-actions .pill{min-height:52px}
+.quick-card{min-height:112px}
+.song{min-height:70px}
+.song .more,.song .heart{flex:none}
+.mini{bottom:calc(78px + env(safe-area-inset-bottom) + 10px)}
+.bottom{height:calc(78px + env(safe-area-inset-bottom))}
+.gesture-hint{margin-top:4px;color:var(--muted);font-size:10px;text-align:center;letter-spacing:.01em}
+.switch{flex:none}
+@media(max-width:520px){
+  .topbar{padding-left:14px;padding-right:14px}
+  .brand-mark{width:40px;height:40px}
+  .brand strong{font-size:16px}
+  .brand small{font-size:6.5px}
+  main{padding-left:14px;padding-right:14px}
+  .hero{border-radius:26px;padding:23px}
+  .hero h1{font-size:32px;line-height:1.03}
+  .hero p{font-size:15px;line-height:1.48}
+  .quick{gap:9px}
+  .quick-card{padding:15px;min-height:100px}
+  .quick-card strong{font-size:23px}
+  .album-card,.album-art{width:132px}
+  .album-card{flex-basis:132px}
+  .mini{width:calc(100% - 12px);border-radius:18px}
+}
+@media(min-width:700px){
+  .hero h1{font-size:42px}
+}
