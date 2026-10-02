@@ -16,6 +16,10 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 import com.getcapacitor.annotation.Permission;
 import com.getcapacitor.annotation.PermissionCallback;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+
 @CapacitorPlugin(
     name = "IsaiMediaStore",
     permissions = {
@@ -44,6 +48,58 @@ public class IsaiMediaStorePlugin extends Plugin {
             scanInternal(call);
         } else {
             call.reject("Audio permission was denied");
+        }
+    }
+
+    @PluginMethod
+    public void prepare(PluginCall call) {
+        if (getPermissionState("audio") != PermissionState.GRANTED) {
+            call.reject("Audio permission is required");
+            return;
+        }
+
+        String uriValue = call.getString("uri");
+        String displayName = call.getString("displayName", "track.mp3");
+        if (uriValue == null || uriValue.isEmpty()) {
+            call.reject("Missing audio URI");
+            return;
+        }
+
+        ContentResolver resolver = getContext().getContentResolver();
+        Uri source = Uri.parse(uriValue);
+        File cacheDir = getContext().getCacheDir();
+        String extension = ".audio";
+        int dot = displayName.lastIndexOf('.');
+        if (dot >= 0 && dot < displayName.length() - 1) {
+            extension = displayName.substring(dot).replaceAll("[^A-Za-z0-9.]", "");
+            if (extension.length() < 2 || extension.length() > 8) {
+                extension = ".audio";
+            }
+        }
+
+        File target = new File(cacheDir, "isai-current" + extension);
+
+        try (InputStream input = resolver.openInputStream(source);
+             FileOutputStream output = new FileOutputStream(target, false)) {
+            if (input == null) {
+                call.reject("Unable to open selected audio");
+                return;
+            }
+
+            byte[] buffer = new byte[64 * 1024];
+            int read;
+            while ((read = input.read(buffer)) != -1) {
+                output.write(buffer, 0, read);
+            }
+            output.flush();
+
+            JSObject result = new JSObject();
+            result.put("uri", Uri.fromFile(target).toString());
+            call.resolve(result);
+        } catch (SecurityException error) {
+            call.reject("Audio permission is required", null, error);
+        } catch (Exception error) {
+            call.reject("Unable to prepare audio: " + error.getMessage(), null, error);
         }
     }
 
