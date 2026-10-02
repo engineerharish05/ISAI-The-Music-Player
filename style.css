@@ -102,3 +102,29 @@ body.dark .player .control.main{
   background:rgba(245,241,230,.90);
   color:#111;
 }
+
+/* Refined heart icon */
+.heart{
+  font-size:0;
+  width:38px;
+  height:38px;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+}
+.heart::before{
+  content:"♡";
+  font-family:"Segoe UI Symbol","Noto Sans Symbols 2",sans-serif;
+  font-size:25px;
+  line-height:1;
+  font-weight:400;
+  color:var(--muted);
+}
+.heart.active::before{
+  content:"♥";
+  color:#d3aa4e;
+  font-size:22px;
+}
+.heart:hover::before{
+  color:var(--gold);
+}
