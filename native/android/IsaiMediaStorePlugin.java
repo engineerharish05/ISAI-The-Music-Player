@@ -4,7 +4,6 @@ import android.Manifest;
 import android.content.ContentResolver;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.Build;
 import android.provider.MediaStore;
 
 import com.getcapacitor.JSArray;
@@ -52,19 +51,16 @@ public class IsaiMediaStorePlugin extends Plugin {
         ContentResolver resolver = getContext().getContentResolver();
         Uri collection = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
 
-        java.util.ArrayList<String> projectionList = new java.util.ArrayList<>();
-        projectionList.add(MediaStore.Audio.Media._ID);
-        projectionList.add(MediaStore.Audio.Media.TITLE);
-        projectionList.add(MediaStore.Audio.Media.ARTIST);
-        projectionList.add(MediaStore.Audio.Media.ALBUM);
-        projectionList.add(MediaStore.Audio.Media.ALBUM_ID);
-        projectionList.add(MediaStore.Audio.Media.DURATION);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            projectionList.add("genre");
-        }
-        projectionList.add(MediaStore.Audio.Media.DISPLAY_NAME);
-        projectionList.add(MediaStore.Audio.Media.MIME_TYPE);
-        String[] projection = projectionList.toArray(new String[0]);
+        String[] projection = {
+            MediaStore.Audio.Media._ID,
+            MediaStore.Audio.Media.TITLE,
+            MediaStore.Audio.Media.ARTIST,
+            MediaStore.Audio.Media.ALBUM,
+            MediaStore.Audio.Media.ALBUM_ID,
+            MediaStore.Audio.Media.DURATION,
+            MediaStore.Audio.Media.DISPLAY_NAME,
+            MediaStore.Audio.Media.MIME_TYPE
+        };
 
         String selection = MediaStore.Audio.Media.IS_MUSIC + " != 0 AND "
             + MediaStore.Audio.Media.DURATION + " > 0";
@@ -85,7 +81,6 @@ public class IsaiMediaStorePlugin extends Plugin {
                 int albumCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM);
                 int albumIdCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID);
                 int durationCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION);
-                int genreCol = cursor.getColumnIndex("genre");
                 int displayCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME);
                 int mimeCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.MIME_TYPE);
 
@@ -96,7 +91,6 @@ public class IsaiMediaStorePlugin extends Plugin {
                     String album = cursor.getString(albumCol);
                     long albumId = cursor.getLong(albumIdCol);
                     long duration = cursor.getLong(durationCol);
-                    String genre = genreCol >= 0 ? cursor.getString(genreCol) : null;
                     String displayName = cursor.getString(displayCol);
                     String mime = cursor.getString(mimeCol);
 
@@ -111,7 +105,7 @@ public class IsaiMediaStorePlugin extends Plugin {
                     item.put("album", album);
                     item.put("albumId", albumId);
                     item.put("duration", duration);
-                    item.put("genre", genre);
+                    item.put("genre", "Local");
                     item.put("displayName", displayName);
                     item.put("mimeType", mime);
                     item.put("uri", Uri.withAppendedPath(collection, String.valueOf(id)).toString());
