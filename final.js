@@ -533,8 +533,13 @@
       songs.push(item);
       const probe=new Audio();
       probe.preload="metadata";
+      await saveImportedTrack(item,file);
       probe.onloadedmetadata=async()=>{
         item.duration=Number.isFinite(probe.duration)?probe.duration:0;
+        await saveImportedTrack(item,file);
+        render();
+      };
+      probe.onerror=async()=>{
         await saveImportedTrack(item,file);
         render();
       };
