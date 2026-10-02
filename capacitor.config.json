@@ -1,0 +1,11 @@
+{
+  "appId": "com.rishinnovations.isai",
+  "appName": "ISAI",
+  "webDir": ".",
+  "bundledWebRuntime": false,
+  "plugins": {
+    "NativeAudio": {
+      "hls": false
+    }
+  }
+}
