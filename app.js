@@ -75,7 +75,7 @@ async function nativeLoad(s){
       nativeAssetId=null;
     }
     const prepared=await mediaStore.prepare({uri:s.src,displayName:s.displayName||"track.mp3"});
-    if(nativePlugins.IsaiPlaybackService?.start)await nativePlugins.IsaiPlaybackService.start();
+    if(mediaStore?.startPlaybackService)await nativePlugins.IsaiPlaybackService.start();
     const assetId="isai-"+String(s.id).replace(/[^a-zA-Z0-9_-]/g,"_");
     await nativeAudio.preload({
       assetId,
@@ -169,7 +169,7 @@ async function load(s){
 function player(){const s=state.current;if(!s)return;view.innerHTML='<div class="player"><button class="back" data-action="player-back">‹ Back</button><div class="big-cover" style="background:'+s.color+'">'+(s.cover?'<img src="'+s.cover+'" alt="">':"♫")+'</div><div class="player-title">'+esc(s.title)+'</div><div class="player-artist">'+esc(s.artist)+" · "+esc(s.album)+'</div><div class="progress"><input id="seek" type="range" min="0" max="'+Math.max(1,s.duration)+'" value="'+Math.floor(audio.currentTime||0)+'"><div class="times"><span id="cur">'+fmt(audio.currentTime)+'</span><span id="dur">'+fmt(audio.duration||s.duration)+'</span></div></div><div class="controls"><button class="control" data-action="shuffle">⤨</button><button class="control" data-action="previous">‹</button><button class="control main" data-action="play">'+(state.playing?"Ⅱ":"▶")+'</button><button class="control" data-action="next">›</button><button class="control" data-action="repeat">↻</button></div><div class="tools"><button class="chip" data-action="lyrics">Lyrics</button><button class="chip" data-action="queue">Queue</button><button class="chip" data-action="equalizer">EQ</button><button class="chip" data-action="sleep">Sleep</button></div></div>';wire();document.querySelector("#seek").oninput=async e=>{const value=+e.target.value;if(nativeLibraryReady&&nativeAudio&&nativeAssetId){try{await nativeAudio.setCurrentTime({assetId:nativeAssetId,time:value})}catch(error){console.warn("Native seek failed:",error)}}else{audio.currentTime=value}progress()}}
 async function progress(){let current=audio.currentTime;if(nativeLibraryReady&&nativeAudio&&nativeAssetId){try{current=(await nativeAudio.getCurrentTime({assetId:nativeAssetId})).currentTime||0}catch(_){}}const s=document.querySelector("#seek");if(s)s.value=current;const c=document.querySelector("#cur");if(c)c.textContent=fmt(current);const d=document.querySelector("#dur");if(d)d.textContent=fmt(audio.duration||state.current?.duration)}
 function updateMini(){if(!state.current){mini.classList.add("hidden");return}mini.classList.remove("hidden");document.querySelector("#miniTitle").textContent=state.current.title;document.querySelector("#miniArtist").textContent=state.current.artist;document.querySelector("#miniPlay").textContent=state.playing?"Ⅱ":"▶"}
-async function togglePlay(){if(!state.current){openPlayer(songs[0].id);return}if(nativeLibraryReady&&nativeAudio&&nativeAssetId){try{if(state.playing){await nativeAudio.pause({assetId:nativeAssetId});state.playing=false}else{await nativePlugins.IsaiPlaybackService?.start?.();await nativeAudio.resume({assetId:nativeAssetId});state.playing=true}}catch(error){console.warn("Native toggle failed:",error)}}else if(state.playing){audio.pause();state.playing=false}else{state.playing=true;if(state.current.src)audio.play().catch(()=>state.playing=false)}updateMini();if(document.querySelector(".player"))player()}
+async function togglePlay(){if(!state.current){openPlayer(songs[0].id);return}if(nativeLibraryReady&&nativeAudio&&nativeAssetId){try{if(state.playing){await nativeAudio.pause({assetId:nativeAssetId});state.playing=false}else{await mediaStore?.startPlaybackService?.();await nativeAudio.resume({assetId:nativeAssetId});state.playing=true}}catch(error){console.warn("Native toggle failed:",error)}}else if(state.playing){audio.pause();state.playing=false}else{state.playing=true;if(state.current.src)audio.play().catch(()=>state.playing=false)}updateMini();if(document.querySelector(".player"))player()}
 function next(){
   if(!songs.length)return;
   const currentId=String(state.current?.id||"");
@@ -245,7 +245,7 @@ picker.onchange=e=>{
 async function handleEnded(){
   if(!state.current)return;
   if(state.repeat==="one"){await load(state.current);return}
-  if(state.repeat==="off"){state.playing=false;nativePlugins.IsaiPlaybackService?.stop?.();save();updateMini();if(document.querySelector(".player"))player();return}
+  if(state.repeat==="off"){state.playing=false;mediaStore?.stopPlaybackService?.();save();updateMini();if(document.querySelector(".player"))player();return}
   next()
 }
 audio.ontimeupdate=progress;
@@ -274,7 +274,7 @@ setInterval(async ()=>{
     save();
     if(nativeLibraryReady&&nativeAudio&&nativeAssetId){
       try{await nativeAudio.pause({assetId:nativeAssetId})}catch(_){}
-      try{await nativePlugins.IsaiPlaybackService?.stop?.()}catch(_){}
+      try{await mediaStore?.stopPlaybackService?.()}catch(_){}
     }else if(!audio.paused){
       audio.pause();
     }
