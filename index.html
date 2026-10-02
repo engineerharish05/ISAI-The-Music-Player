@@ -3,35 +3,41 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0b0b0d">
+<meta name="theme-color" content="#0a0a09">
 <meta name="description" content="ISAI — The Music Player">
 <link rel="icon" type="image/svg+xml" href="assets/isai-logo.svg">
-<title>ISAI — The Music Player</title>
 <link rel="stylesheet" href="style.css">
+<title>ISAI — The Music Player</title>
 </head>
 <body>
-<div class="app-shell">
-<header class="topbar">
-<button class="brand" data-action="home" aria-label="ISAI Home"><span class="logo"><img src="assets/isai-logo.svg" alt="ISAI logo"></span><span class="brand-copy"><b>ISAI</b><small>THE MUSIC PLAYER</small></span></button>
-<div class="top-actions"><button class="icon-btn" data-action="search" aria-label="Search">⌕</button><button class="icon-btn" data-action="toggle-theme" aria-label="Toggle theme">◐</button></div>
-</header>
-<main id="view" aria-live="polite"></main>
-<section class="mini-player hidden" id="miniPlayer">
-<button class="mini-art" data-action="open-player" aria-label="Open player">♫</button>
-<button class="mini-meta" data-action="open-player"><b id="miniTitle">Nothing playing</b><span id="miniArtist">Choose a song</span></button>
-<button class="mini-icon" data-action="previous" aria-label="Previous">‹</button>
-<button class="mini-play" id="playBtn" data-action="play" aria-label="Play">▶</button>
-<button class="mini-icon" data-action="next" aria-label="Next">›</button>
-</section>
-<nav class="bottom-nav" aria-label="Main navigation">
-<button class="nav active" data-page="home"><span>⌂</span><b>Home</b></button>
-<button class="nav" data-page="explore"><span>✦</span><b>Explore</b></button>
-<button class="nav" data-page="library"><span>▤</span><b>Library</b></button>
-<button class="nav" data-page="playlists"><span>☷</span><b>Playlists</b></button>
-<button class="nav" data-page="settings"><span>⚙</span><b>Settings</b></button>
-</nav>
+<div class="app">
+  <header class="topbar">
+    <button class="brand" data-action="home"><span class="brand-mark"><img src="assets/isai-logo.svg" alt="ISAI"></span><span><strong>ISAI</strong><small>THE MUSIC PLAYER</small></span></button>
+    <div class="top-actions">
+      <button class="round" data-action="search" aria-label="Search">⌕</button>
+      <button class="round" data-action="toggle-theme" aria-label="Theme">◐</button>
+    </div>
+  </header>
+
+  <main id="view"></main>
+
+  <section id="miniPlayer" class="mini hidden">
+    <button class="mini-cover" data-action="open-player">♫</button>
+    <button class="mini-info" data-action="open-player"><b id="miniTitle">Nothing playing</b><span id="miniArtist">Choose a song</span></button>
+    <button class="mini-btn" data-action="previous">‹</button>
+    <button class="mini-main" id="miniPlay" data-action="play">▶</button>
+    <button class="mini-btn" data-action="next">›</button>
+  </section>
+
+  <nav class="bottom">
+    <button class="nav active" data-page="home"><i>⌂</i><span>Home</span></button>
+    <button class="nav" data-page="explore"><i>⌕</i><span>Explore</span></button>
+    <button class="nav" data-page="library"><i>♫</i><span>Library</span></button>
+    <button class="nav" data-page="playlists"><i>▤</i><span>Playlists</span></button>
+    <button class="nav" data-page="settings"><i>⚙</i><span>Settings</span></button>
+  </nav>
 </div>
-<div class="toast" id="toast"></div>
+<div id="toast"></div>
 <input id="filePicker" type="file" accept="audio/*" multiple hidden>
 <audio id="audio" preload="metadata"></audio>
 <script src="app.js"></script>
