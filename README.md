@@ -39,3 +39,7 @@ Open index.html in a modern browser. For best results, serve the folder through 
 ## Project
 
 Private repository: engineerharish05/ISAI-The-Music-Player
+
+## Build
+
+Android debug builds are validated by GitHub Actions with Node.js syntax checking before Capacitor/Gradle packaging.
