@@ -589,7 +589,5 @@
   });
 
   /* Native library scan is intentionally retained from the original implementation. */
-  if(isNative) initNativeMusic();
-  installMediaSession();
   render();
 })();
