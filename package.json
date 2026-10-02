@@ -11,7 +11,8 @@
   "dependencies": {
     "@capacitor/android": "8.5.2",
     "@capacitor/core": "8.5.2",
-    "@capgo/capacitor-native-audio": "8.4.30"
+    "@capgo/capacitor-native-audio": "8.4.30",
+    "@capacitor/haptics": "8.5.2"
   },
   "devDependencies": {
     "@capacitor/cli": "8.5.2"
