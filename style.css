@@ -25,3 +25,12 @@ main{padding:8px 18px 28px}.eyebrow{font-size:10px;font-weight:800;letter-spacin
 #toast{position:fixed;left:50%;bottom:106px;transform:translate(-50%,14px);opacity:0;pointer-events:none;background:#171713;color:#fff;padding:10px 15px;border-radius:999px;font-size:12px;z-index:100;transition:.2s}#toast.show{opacity:1;transform:translate(-50%,0)}
 body.dark{--bg:#090909;--surface:rgba(27,27,24,.86);--solid:#171714;--text:#f6f3ea;--muted:#99968c;--line:#ffffff13;--gold:#d3aa4e;--gold2:#ecd17d;--gold-soft:#2b2619;--black:#f5f1e6}body.dark .brand-mark{background:#fff}body.dark .mini-main,body.dark .control.main,body.dark .chip.active{background:#f5f1e6;color:#111}body.dark .hero{background:linear-gradient(135deg,#0d0d0c,#1c1a13 48%,#5e461c)}
 @media(min-width:650px){main{padding-left:24px;padding-right:24px}.quick{grid-template-columns:repeat(4,1fr)}.hero{padding:32px}.big-cover{width:380px}}
+
+/* Dark-mode playlist contrast fix */
+body.dark .list{background:rgba(23,23,20,.94);border-color:#ffffff14}
+body.dark .list .song{background:rgba(255,255,255,.035);color:var(--text)}
+body.dark .list .song:hover{background:rgba(211,170,78,.12)}
+body.dark .list .song-info b{color:#f6f3ea}
+body.dark .list .song-info span{color:#aaa69b}
+body.dark .list .more{color:#aaa69b}
+body.dark .list .song-art{background:linear-gradient(145deg,#202018,#806322)}
