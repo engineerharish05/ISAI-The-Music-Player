@@ -29,15 +29,25 @@ jobs:
           distribution: temurin
           java-version: "21"
 
-      - name: Validate JavaScript syntax
-        run: node --check app.js
+      - name: Validate JavaScript
+        run: |
+          node --check app.js
+          node --check final.js
 
       - name: Prepare web bundle
         run: |
           rm -rf www
           mkdir -p www/assets
-          cp index.html style.css app.js www/
+          cp index.html style.css app.js final.js manifest.webmanifest sw.js www/
           cp assets/isai-logo.jpg www/assets/
+
+      - name: Verify web bundle
+        run: |
+          test -f www/index.html
+          test -f www/final.js
+          test -f www/manifest.webmanifest
+          test -f www/sw.js
+          grep -q 'final.js' www/index.html
 
       - name: Create Android project
         run: npx cap add android
@@ -80,7 +90,6 @@ jobs:
       - name: Add Android media permissions
         shell: bash
         run: |
-          MANIFEST="android/app/src/main/AndroidManifest.xml"
           python3 - <<'PY'
           from pathlib import Path
           p = Path("android/app/src/main/AndroidManifest.xml")
@@ -91,8 +100,6 @@ jobs:
               s = s.replace(marker, marker + perms, 1)
           p.write_text(s)
           PY
-
-
 
       - name: Add ISAI foreground playback service
         shell: bash
@@ -141,7 +148,6 @@ jobs:
               @Override public IBinder onBind(Intent intent) { return null; }
           }
           JAVA
-          MANIFEST="android/app/src/main/AndroidManifest.xml"
           python3 - <<'PY'
           from pathlib import Path
           p=Path("android/app/src/main/AndroidManifest.xml")
@@ -152,16 +158,14 @@ jobs:
               s=s.replace(marker,service+marker,1)
           p.write_text(s)
           PY
-      - name: Verify playback service
-        run: |
-          test -f android/app/src/main/java/com/rishinnovations/isai/IsaiPlaybackService.java
-          grep -q 'IsaiPlaybackService' android/app/src/main/AndroidManifest.xml
-          grep -q 'startPlaybackService' android/app/src/main/java/com/rishinnovations/isai/IsaiMediaStorePlugin.java
 
-      - name: Verify native bridge source
+      - name: Verify native bridge and service
         run: |
           test -f android/app/src/main/java/com/rishinnovations/isai/IsaiMediaStorePlugin.java
+          test -f android/app/src/main/java/com/rishinnovations/isai/IsaiPlaybackService.java
           grep -q 'registerPlugin(IsaiMediaStorePlugin.class)' android/app/src/main/java/com/rishinnovations/isai/MainActivity.java
+          grep -q 'startPlaybackService' android/app/src/main/java/com/rishinnovations/isai/IsaiMediaStorePlugin.java
+          grep -q 'IsaiPlaybackService' android/app/src/main/AndroidManifest.xml
 
       - name: Build debug APK
         working-directory: android
