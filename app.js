@@ -8,7 +8,7 @@ const seed=[
 
 let saved={};
 try{saved=JSON.parse(localStorage.getItem("isai-state")||"{}")||{}}catch(error){console.warn("ISAI state reset:",error);localStorage.removeItem("isai-state")}
-const state={page:"home",playerOrigin:"home",theme:saved.theme||"dark",current:null,playing:false,shuffle:!!saved.shuffle,repeat:saved.repeat||"all",favorites:new Set(saved.favorites||[]),history:saved.history||[],queue:saved.queue||[],speed:saved.speed||1,volume:saved.volume??1,sleepUntil:saved.sleepUntil||0,playlists:saved.playlists||{"Liked Songs":[],"Tamil Essentials":[3,6]}};
+const state={page:"home",playerOrigin:"home",theme:saved.theme||"dark",current:null,playing:false,shuffle:!!saved.shuffle,repeat:saved.repeat||"all",haptics:saved.haptics!==false,gestures:saved.gestures!==false,favorites:new Set(saved.favorites||[]),history:saved.history||[],queue:saved.queue||[],speed:saved.speed||1,volume:saved.volume??1,sleepUntil:saved.sleepUntil||0,playlists:saved.playlists||{"Liked Songs":[],"Tamil Essentials":[3,6]}};
 let songs=[...seed],urls=[];
 const nativePlugins=window.Capacitor?.Plugins||{};
 const mediaStore=nativePlugins.IsaiMediaStore||null;
@@ -18,7 +18,7 @@ const isNative=!!window.Capacitor?.isNativePlatform?.();
 let nativeLibraryReady=false;
 let lastHapticAt=0;
 async function haptic(style="LIGHT"){
-  if(!haptics?.impact)return;
+  if(!state.haptics||!haptics?.impact)return;
   const now=Date.now();
   if(now-lastHapticAt<45)return;
   lastHapticAt=now;
@@ -101,7 +101,10 @@ const albumArt=s=>s.cover?'<div class="album-art"><img src="'+s.cover+'" alt="">
 function msg(t){toast.textContent=t;toast.classList.add("show");clearTimeout(window.tt);window.tt=setTimeout(()=>toast.classList.remove("show"),1600)}
 function setPage(p){state.page=p;render()}
 function row(s){return '<div class="song" data-song="'+esc(String(s.id))+'">'+art(s)+'<div class="song-info"><b>'+esc(s.title)+'</b><span>'+esc(s.artist)+" · "+esc(s.album)+" · "+fmt(s.duration)+'</span></div><button class="heart '+(state.favorites.has(s.id)?"active":"")+'" data-fav="'+s.id+'">'+(state.favorites.has(s.id)?"♥":"♡")+'</button><button class="more" data-more="'+s.id+'">⋯</button></div>'}
-function render(){document.body.classList.toggle("dark",state.theme==="dark");document.querySelectorAll(".nav").forEach(n=>n.classList.toggle("active",n.dataset.page===state.page));({home,explore,library,playlists,settings}[state.page]||home)();updateMini()}
+function render(){
+  document.body.classList.toggle("dark",state.theme==="dark");
+  const themeMeta=document.querySelector('meta[name="theme-color"]');
+  if(themeMeta)themeMeta.content=state.theme==="dark"?"#090909":"#f4f1e8";document.querySelectorAll(".nav").forEach(n=>n.classList.toggle("active",n.dataset.page===state.page));({home,explore,library,playlists,settings}[state.page]||home)();updateMini()}
 function home(){
 const recent=state.history.map(id=>songs.find(s=>s.id===id)).filter(Boolean).slice(0,6);
 const albums=[...new Map(songs.map(s=>[s.album,s])).values()];
@@ -128,7 +131,9 @@ function settings(){
 view.innerHTML='<div class="eyebrow">Settings</div><h1>Make ISAI yours.</h1>'+
 '<div class="card" style="padding:4px 18px">'+
 '<div class="setting"><div><b>Dark theme</b><span>ISAI night appearance</span></div><button class="switch '+(state.theme==="dark"?"on":"")+'" data-action="toggle-theme"><div class="knob"></div></button></div>'+
-'<div class="setting"><div><b>Shuffle</b><span>Randomize next tracks</span></div><button class="switch '+(state.shuffle?"on":"")+'" data-action="shuffle-toggle"><div class="knob"></div></button></div>'+
+'<div class="setting"><div><b>Shuffle</b><span>Randomize next tracks</span></div><button class="switch '+(state.shuffle?"on":"")+'" data-action="shuffle-toggle" aria-label="Toggle shuffle"><div class="knob"></div></button></div>'+
+'<div class="setting"><div><b>Haptics</b><span>Subtle touch feedback</span></div><button class="switch '+(state.haptics?"on":"")+'" data-action="toggle-haptics" aria-label="Toggle haptics"><div class="knob"></div></button></div>'+
+'<div class="setting"><div><b>Gestures</b><span>Swipe and long-press controls</span></div><button class="switch '+(state.gestures?"on":"")+'" data-action="toggle-gestures" aria-label="Toggle gestures"><div class="knob"></div></button></div>'+
 '<div class="setting"><div><b>Equalizer</b><span>10-band player controls</span></div><button class="more" data-action="equalizer">›</button></div>'+
 '<div class="setting"><div><b>Sleep timer</b><span>Stop playback automatically</span></div><button class="more" data-action="sleep">›</button></div>'+
 '<div class="setting"><div><b>Playback speed</b><span>'+state.speed+'×</span></div><button class="more" data-action="speed">›</button></div>'+
@@ -253,7 +258,10 @@ root.querySelectorAll("[data-playlist]").forEach(x=>x.onclick=()=>showPlaylist(x
 root.querySelectorAll("[data-more]").forEach(x=>x.onclick=e=>{e.stopPropagation();const s=songs.find(v=>String(v.id)===String(x.dataset.more));modal(s.title,'<div class="setting"><div><b>Play now</b><span>Start immediately</span></div><button class="more" data-play="'+s.id+'">▶</button></div><div class="setting"><div><b>Add to queue</b><span>Play after current queue</span></div><button class="more" data-add="'+s.id+'">＋</button></div>')});
 root.querySelectorAll("[data-play]").forEach(x=>x.onclick=()=>{document.querySelector(".modal")?.remove();openPlayer(x.dataset.play)});
 root.querySelectorAll("[data-add]").forEach(x=>x.onclick=()=>{state.queue.push(x.dataset.add);save();document.querySelector(".modal")?.remove();msg("Added to queue")});
-root.querySelectorAll("[data-action]").forEach(x=>{const a=x.dataset.action;const fn={home:()=>setPage("home"),search:()=>setPage("explore"),"toggle-theme":()=>{state.theme=state.theme==="dark"?"light":"dark";save();render()},import:importFiles,"open-player":()=>state.current&&player(),"player-back":()=>setPage(state.playerOrigin||"home"),play:togglePlay,previous,next,shuffle,repeat,queue,lyrics,equalizer:eq,sleep,speed,favorites,history,services,"new-playlist":newPlaylist,"shuffle-toggle":()=>{state.shuffle=!state.shuffle;save();render()},close:()=>document.querySelector(".modal")?.remove()}[a];if(fn)x.onclick=fn});
+root.querySelectorAll("[data-action]").forEach(x=>{const a=x.dataset.action;const fn={home:()=>setPage("home"),search:()=>setPage("explore"),"toggle-theme":()=>{state.theme=state.theme==="dark"?"light":"dark";save();render()},import:importFiles,"open-player":()=>state.current&&player(),"player-back":()=>setPage(state.playerOrigin||"home"),play:togglePlay,previous,next,shuffle,repeat,queue,lyrics,equalizer:eq,sleep,speed,favorites,history,services,"new-playlist":newPlaylist,"shuffle-toggle":()=>{state.shuffle=!state.shuffle;save();haptic("LIGHT");render()},
+"toggle-haptics":()=>{state.haptics=!state.haptics;save();if(state.haptics)haptic("LIGHT");render()},
+"toggle-gestures":()=>{state.gestures=!state.gestures;save();haptic("LIGHT");render()},
+close:()=>document.querySelector(".modal")?.remove()}[a];if(fn)x.onclick=fn});
 root.querySelectorAll("[data-genre]").forEach(x=>x.onclick=()=>{root.querySelectorAll(".chip").forEach(c=>c.classList.remove("active"));x.classList.add("active");const g=x.dataset.genre;document.querySelector("#results").innerHTML=(g==="All"?songs:songs.filter(s=>s.genre===g)).map(row).join("");wire()});
 const search=root.querySelector("#search");if(search)search.oninput=e=>{const q=e.target.value.toLowerCase();document.querySelector("#results").innerHTML=songs.filter(s=>(s.title+" "+s.artist+" "+s.album+" "+s.genre).toLowerCase().includes(q)).map(row).join("")||'<div class="empty">No matches found.</div>';wire()}
 }
@@ -267,7 +275,7 @@ function installMobileInteractions(){
   if(window.__isaiMobileInteractions)return;
   window.__isaiMobileInteractions=true;
   document.addEventListener("touchstart",e=>{
-    if(e.touches.length!==1)return;
+    if(!state.gestures||e.touches.length!==1)return;
     const point=e.touches[0],target=e.target;
     const miniTarget=target.closest(".mini");
     const playerTarget=target.closest(".player");
@@ -294,7 +302,7 @@ function installMobileInteractions(){
     }
   },{passive:true});
   document.addEventListener("touchmove",e=>{
-    if(!touchState.kind||e.touches.length!==1)return;
+    if(!state.gestures||!touchState.kind||e.touches.length!==1)return;
     const point=e.touches[0],dx=point.clientX-touchState.x,dy=point.clientY-touchState.y;
     if(Math.abs(dx)>10||Math.abs(dy)>10){touchState.moved=true;clearTouchTimer()}
     if(touchState.kind==="mini"&&Math.abs(dy)>20&&Math.abs(dy)>Math.abs(dx)*1.15)e.preventDefault();
@@ -302,7 +310,7 @@ function installMobileInteractions(){
     if(touchState.kind==="player"&&dy>20&&dy>Math.abs(dx)*1.15)e.preventDefault();
   },{passive:false});
   document.addEventListener("touchend",e=>{
-    if(!touchState.kind)return;
+    if(!state.gestures||!touchState.kind)return;
     const dx=(e.changedTouches[0]?.clientX||touchState.x)-touchState.x;
     const dy=(e.changedTouches[0]?.clientY||touchState.y)-touchState.y;
     const kind=touchState.kind,moved=touchState.moved,longPress=touchState.longPress;
