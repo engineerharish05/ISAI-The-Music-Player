@@ -44,18 +44,26 @@
     const style=document.createElement("style");
     style.id="isai-online-style";
     style.textContent=`
-      .online-wrap{margin-top:8px}
-      .online-search{display:flex;gap:8px;margin:12px 0}
-      .online-search input{flex:1;min-width:0;height:52px;border-radius:18px;border:1px solid var(--line);background:var(--surface);padding:0 16px;color:var(--text);outline:0}
-      .online-search button{height:52px;padding:0 17px;border-radius:18px;background:var(--black);color:#fff;font-weight:800}
+      .online-section{margin:28px 0 30px}
+      .online-wrap{padding:0}
+      .online-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:12px}
+      .online-heading h2{margin:3px 0 0}
+      .online-badge{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);white-space:nowrap}
+      .online-search{display:flex;gap:9px;margin:0 0 10px}
+      .online-search input{flex:1;min-width:0;height:54px;border-radius:18px;border:1px solid var(--line);background:var(--surface);padding:0 17px;color:var(--text);outline:0;box-shadow:var(--shadow)}
+      .online-search input:focus{border-color:var(--gold)}
+      .online-search button{width:104px;height:54px;padding:0 14px;border-radius:18px;background:var(--black);color:#fff;font-weight:800;box-shadow:0 8px 22px #0002}
       body.dark .online-search button{background:#f5f1e6;color:#111}
-      .online-card{display:flex;align-items:center;gap:11px;padding:9px;border-radius:17px;background:none;border:0;width:100%;text-align:left;color:inherit}
+      .online-results{background:var(--surface);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);overflow:hidden}
+      .online-card{display:flex;align-items:center;gap:12px;padding:11px 12px;border-bottom:1px solid var(--line);background:transparent;width:100%;text-align:left;color:inherit}
+      .online-card:last-child{border-bottom:0}
       .online-card:hover{background:var(--gold-soft)}
-      .online-thumb{width:64px;height:48px;border-radius:11px;object-fit:cover;background:#222;flex:none}
+      .online-thumb{width:66px;height:48px;border-radius:10px;object-fit:cover;background:#222;flex:none}
       .online-meta{min-width:0;flex:1}
       .online-meta b,.online-meta span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
       .online-meta b{font-size:13px}.online-meta span{font-size:11px;color:var(--muted);margin-top:4px}
-      .online-action{width:38px;height:38px;border-radius:50%;background:var(--surface);border:1px solid var(--line);color:inherit;flex:none}
+      .online-action{width:40px;height:40px;border-radius:50%;background:var(--surface);border:1px solid var(--line);color:inherit;flex:none}
+      .online-empty{min-height:96px;display:grid;place-items:center;padding:24px;color:var(--muted);font-size:13px;text-align:center}
       .online-player{position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.72);display:none;align-items:flex-end}
       .online-player.open{display:flex}
       .online-sheet{width:min(900px,100%);background:var(--solid);border-radius:28px 28px 0 0;padding:18px;max-height:92vh;overflow:auto}
@@ -167,7 +175,7 @@
 
   async function search(q,container){
     if(!q)return;
-    container.innerHTML='<div class="empty">Searching YouTube…</div>';
+    container.innerHTML='<div class="online-empty">Searching YouTube…</div>';
     try{
       const r=await fetch(apiBase()+"/youtube-search?q="+encodeURIComponent(q),{headers:{"Accept":"application/json"}});
       const data=await r.json();
@@ -180,7 +188,7 @@
   }
 
   function renderResults(container){
-    if(!results.length){container.innerHTML='<div class="empty">No online results found.</div>';return;}
+    if(!results.length){container.innerHTML='<div class="online-empty">No online results found.</div>';return;}
     container.innerHTML=results.map((x,i)=>`
       <div class="online-card">
         <img class="online-thumb" src="${esc(x.thumbnail)}" alt="">
@@ -193,32 +201,21 @@
   function mountExplore(){
     ensureStyle();
     const view=document.querySelector("#view");
-    if(!view || !location) return;
-    const obs=new MutationObserver(()=>{
-      if(document.querySelector("#isaiOnlineSearch")) return;
-      const search=document.querySelector("#search");
-      const resultsBox=document.querySelector("#results");
-      if(!search || !resultsBox) return;
-      const wrap=document.createElement("div");
-      wrap.className="online-wrap";
-      wrap.id="isaiOnlineSearch";
-      wrap.innerHTML=`
-        <div class="eyebrow">Online music</div>
-        <div class="online-search">
-          <input id="isaiOnlineInput" placeholder="Search YouTube…" autocomplete="off">
-          <button id="isaiOnlineButton">Search</button>
-        </div>
-        <div id="isaiOnlineResults" class="card list"><div class="empty">Search for an artist, song or album.</div></div>`;
-      resultsBox.parentNode.insertBefore(wrap,resultsBox);
-      const input=document.getElementById("isaiOnlineInput");
-      const button=document.getElementById("isaiOnlineButton");
-      const run=()=>search(input.value.trim(),document.getElementById("isaiOnlineResults"));
+    if(!view) return;
+    const mount=()=>{
+      const host=document.querySelector("#onlineMount");
+      if(!host || host.dataset.mounted==="1") return;
+      host.dataset.mounted="1";
+      host.innerHTML='<div class="online-wrap"><div class="online-heading"><div><div class="eyebrow">Online music</div><h2>YouTube</h2></div><span class="online-badge">Official</span></div><div class="online-search"><input id="isaiOnlineInput" placeholder="Search YouTube…" autocomplete="off"><button id="isaiOnlineButton">Search</button></div><div id="isaiOnlineResults" class="online-results"><div class="online-empty">Search YouTube for an artist, song or album.</div></div></div>';
+      const input=host.querySelector("#isaiOnlineInput");
+      const button=host.querySelector("#isaiOnlineButton");
+      const run=()=>search(input.value.trim(),host.querySelector("#isaiOnlineResults"));
       button.onclick=run;
       input.addEventListener("keydown",e=>{if(e.key==="Enter")run();});
-    });
-    obs.observe(view,{childList:true,subtree:true});
+    };
+    mount();
+    new MutationObserver(mount).observe(view,{childList:true,subtree:true});
   }
-
   function init(){
     ensureStyle();
     ensurePlayerShell();
