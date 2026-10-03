@@ -141,7 +141,16 @@ public class IsaiMediaStorePlugin extends Plugin {
 
     private void scanInternal(PluginCall call) {
         ContentResolver resolver = getContext().getContentResolver();
-        Uri collection = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+
+        // Android 10+ supports querying all external storage volumes through
+        // MediaStore.VOLUME_EXTERNAL. This is preferable to hard-coding the
+        // primary volume because users may keep music on an SD card.
+        Uri collection;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            collection = MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL);
+        } else {
+            collection = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+        }
 
         String[] projection = {
             MediaStore.Audio.Media._ID,
@@ -151,12 +160,17 @@ public class IsaiMediaStorePlugin extends Plugin {
             MediaStore.Audio.Media.ALBUM_ID,
             MediaStore.Audio.Media.DURATION,
             MediaStore.Audio.Media.DISPLAY_NAME,
-            MediaStore.Audio.Media.MIME_TYPE
+            MediaStore.Audio.Media.MIME_TYPE,
+            MediaStore.Audio.Media.DATE_ADDED
         };
 
-        String selection = MediaStore.Audio.Media.MIME_TYPE + " LIKE ? AND "
-            + MediaStore.Audio.Media.DURATION + " > 0";
-        String[] selectionArgs = {"audio/%"};
+        // MediaStore.Audio.Media is already the audio collection. Do not add a
+        // MIME_TYPE filter here: some devices/media providers expose valid
+        // audio rows with a null or non-standard MIME value. Filtering only on
+        // a positive duration is more robust and matches the Android media
+        // collection contract.
+        String selection = MediaStore.Audio.Media.DURATION + " > 0";
+        String[] selectionArgs = null;
 
         JSArray media = new JSArray();
 
@@ -176,6 +190,7 @@ public class IsaiMediaStorePlugin extends Plugin {
                 int durationCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION);
                 int displayCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME);
                 int mimeCol = cursor.getColumnIndex(MediaStore.Audio.Media.MIME_TYPE);
+                int addedCol = cursor.getColumnIndex(MediaStore.Audio.Media.DATE_ADDED);
 
                 while (cursor.moveToNext()) {
                     long id = cursor.getLong(idCol);
@@ -185,11 +200,11 @@ public class IsaiMediaStorePlugin extends Plugin {
                     long albumId = cursor.getLong(albumIdCol);
                     long duration = cursor.getLong(durationCol);
                     String displayName = cursor.getString(displayCol);
-                    String mime = cursor.getString(mimeCol);
-                    if (title == null || title.trim().isEmpty()) title = displayNameOrFallback(cursor, displayCol);
+                    String mime = mimeCol >= 0 ? cursor.getString(mimeCol) : null;
+                    long dateAdded = addedCol >= 0 ? cursor.getLong(addedCol) : 0L;
 
-                    if (mime == null || !mime.toLowerCase().startsWith("audio/")) {
-                        continue;
+                    if (title == null || title.trim().isEmpty()) {
+                        title = displayNameOrFallback(cursor, displayCol);
                     }
 
                     JSObject item = new JSObject();
@@ -201,7 +216,8 @@ public class IsaiMediaStorePlugin extends Plugin {
                     item.put("duration", duration);
                     item.put("genre", "Local");
                     item.put("displayName", displayName);
-                    item.put("mimeType", mime);
+                    item.put("mimeType", mime == null ? "audio/*" : mime);
+                    item.put("dateAdded", dateAdded);
                     item.put("uri", Uri.withAppendedPath(collection, String.valueOf(id)).toString());
                     media.put(item);
                 }
@@ -210,6 +226,7 @@ public class IsaiMediaStorePlugin extends Plugin {
             JSObject result = new JSObject();
             result.put("media", media);
             result.put("count", media.length());
+            result.put("collection", collection.toString());
             call.resolve(result);
         } catch (SecurityException error) {
             call.reject("Audio permission is required", null, error);
