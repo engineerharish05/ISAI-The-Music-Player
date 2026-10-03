@@ -1,20 +1,16 @@
 # ISAI — Third-Party and License Notice
 
-## ISAI original code
+## ISAI source
 
-Original ISAI source code designated by the project author is licensed under the **ISAI Custom Open Source License 1.0**.
+The native Android player, local music catalog, playback coordinator, queue model, and ISAI UI in this repository are original ISAI project code and are licensed under the **ISAI Custom Open Source License 1.0**.
 
 See [LICENSE-ISAI.md](LICENSE-ISAI.md).
 
-## SimpMusic-derived code
+## Independent implementation
 
-The current native Android player/queue/control implementation contains code adapted from the GPL-3.0-licensed SimpMusic project:
+ISAI may use public music-player applications as feature and UX references. The current native implementation does not intentionally copy SimpMusic source code.
 
-https://github.com/maxrave-dev/SimpMusic
-
-Those adapted portions remain under **GNU GPL v3** and are not relicensed under the ISAI custom license.
-
-The SimpMusic copyright and license obligations must be preserved for those portions.
+The player uses Android MediaStore and AndroidX Media3/ExoPlayer APIs as technical dependencies. Those dependencies remain under their own licenses.
 
 ## Branding
 
