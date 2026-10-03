@@ -239,6 +239,11 @@
         updateMini();
         return;
       }
+      state.playing=false;
+      msg("Native audio playback failed");
+      player();
+      updateMini();
+      return;
     }
     if(!s.src){
       audio.removeAttribute("src");
@@ -422,7 +427,7 @@
       state.volume=Math.max(0,Math.min(1,Number(e.target.value)||0));
       audio.volume=state.volume;
       if(nativeLibraryReady&&nativeAudio&&nativeAssetId){
-        try{await nativeAudio.setVolume({assetId:nativeAssetId,volume:Math.max(.1,state.volume)})}catch(_){}
+        try{await nativeAudio.setVolume({assetId:nativeAssetId,volume:Math.max(0,Math.min(1,state.volume))})}catch(_){}
       }
       persistCurrent();
     };
