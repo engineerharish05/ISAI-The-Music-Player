@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -19,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 
@@ -100,7 +102,7 @@ private fun Home(songs: List<Song>, player: PlayerState, vm: IsaiViewModel, favo
             Card(shape = RoundedCornerShape(28.dp), colors = CardDefaults.cardColors(containerColor = Surface)) {
                 Column(Modifier.fillMaxWidth().padding(22.dp)) {
                     Text("Your music.", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-                    Text(if (songs.isEmpty()) "Scan your device for local music." else "@{songs.size} songs on this device", color = Color.LightGray)
+                    Text(if (songs.isEmpty()) "Scan your device for local music." else "${songs.size} songs on this device", color = Color.LightGray)
                     Spacer(Modifier.height(16.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         Button(enabled = songs.isNotEmpty(), onClick = vm::playAll) {
@@ -114,7 +116,7 @@ private fun Home(songs: List<Song>, player: PlayerState, vm: IsaiViewModel, favo
         item { Text("Recently available", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) }
         if (songs.isEmpty()) item { EmptyState("No local music found") }
         else items(songs.take(12), key = { it.id }) { song ->
-            SongRow(song, song.id in favorites, { favorites.toggle(song.id) }) { vm.play(song) }
+            SongRow(song, favorite = song.id in favorites, onFavorite = { favorites.toggle(song.id) }, onClick = { vm.play(song) })
         }
     }
 }
@@ -132,7 +134,7 @@ private fun SearchPage(songs: List<Song>, search: String, onSearch: (String) -> 
         Spacer(Modifier.height(14.dp))
         LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             items(songs, key = { it.id }) { song ->
-                SongRow(song, song.id in favorites, { favorites.toggle(song.id) }) { vm.play(song) }
+                SongRow(song, favorite = song.id in favorites, onFavorite = { favorites.toggle(song.id) }, onClick = { vm.play(song) })
             }
         }
     }
@@ -142,11 +144,11 @@ private fun SearchPage(songs: List<Song>, search: String, onSearch: (String) -> 
 private fun Library(songs: List<Song>, vm: IsaiViewModel, favorites: MutableList<Long>, padding: PaddingValues) {
     Column(Modifier.fillMaxSize().padding(padding).padding(20.dp)) {
         Text("Library", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-        Text("@{songs.size} songs", color = Gold)
+        Text("${songs.size} songs", color = Gold)
         Spacer(Modifier.height(12.dp))
         LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             items(songs, key = { it.id }) { song ->
-                SongRow(song, song.id in favorites, { favorites.toggle(song.id) }) { vm.play(song) }
+                SongRow(song, favorite = song.id in favorites, onFavorite = { favorites.toggle(song.id) }, onClick = { vm.play(song) })
             }
         }
     }
@@ -178,7 +180,7 @@ private fun SongRow(song: Song, favorite: Boolean, onFavorite: () -> Unit, onCli
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(song.title, fontWeight = if (active) FontWeight.Bold else FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text("@{song.artist} · @{song.album}", color = Color.LightGray, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text("${song.artist} · ${song.album}", color = Color.LightGray, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         IconButton(onClick = onFavorite) {
             Icon(if (favorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder, "Favorite", tint = if (favorite) Gold else Color.LightGray)
