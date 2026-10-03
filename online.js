@@ -162,7 +162,7 @@
     if(!q)return;
     container.innerHTML='<div class="empty">Searching YouTube…</div>';
     try{
-      const r=await fetch("/api/youtube-search?q="+encodeURIComponent(q),{headers:{"Accept":"application/json"}});
+      const r=await fetch(apiBase()+"/youtube-search?q="+encodeURIComponent(q),{headers:{"Accept":"application/json"}});
       const data=await r.json();
       if(!r.ok) throw new Error(data.error||"Search failed");
       results=data.items||[];
