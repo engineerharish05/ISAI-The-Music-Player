@@ -4,59 +4,13 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useStore } from "../../src/store";
 import { getPlayer } from "../../src/player";
 import { gold, muted } from "../../src/ui";
-
-export default function PlayerScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const router = useRouter();
-  const { songs, state, play, next, previous, toggleShuffle, cycleRepeat } = useStore();
-  const song = useMemo(() => songs.find(s => s.id === id) || songs.find(s => s.id === state.currentId), [songs,id,state.currentId]);
-  const [position, setPosition] = useState(0);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      const p = getPlayer();
-      if (p) setPosition(p.currentTime || 0);
-    }, 500);
-    return () => clearInterval(timer);
-  }, []);
-
-  if (!song) return <SafeAreaView style={styles.safe}><Text style={styles.empty}>Song unavailable.</Text></SafeAreaView>;
-
-  const toggle = () => {
-    const p = getPlayer();
-    if (!p) { play(song); return; }
-    if (state.playing) p.pause(); else p.play();
-  };
-
-  const seek = (delta: number) => {
-    const p = getPlayer();
-    if (!p) return;
-    p.seekTo(Math.max(0, Math.min(song.duration || p.duration || 0, (p.currentTime || 0) + delta)));
-  };
-
-  return <SafeAreaView style={styles.safe}>
-    <View style={styles.top}><Pressable onPress={() => router.back()}><Text style={styles.back}>⌄</Text></Pressable><Text style={styles.now}>NOW PLAYING</Text><View /></View>
-    <View style={styles.body}>
-      <View style={styles.cover}><Text style={styles.note}>♫</Text></View>
-      <Text style={styles.title}>{song.title}</Text>
-      <Text style={styles.artist}>{song.artist} · {song.album}</Text>
-      <View style={styles.progress}><View style={[styles.progressFill,{width: song.duration ? Math.min(100,position/song.duration*100)+"%" : "0%"}]} /></View>
-      <View style={styles.times}><Text>{fmt(position)}</Text><Text>{fmt(song.duration)}</Text></View>
-      <View style={styles.controls}>
-        <Pressable onPress={toggleShuffle}><Text style={[styles.secondary,{color:state.shuffle?gold:muted}]}>⤨</Text></Pressable>
-        <Pressable onPress={previous}><Text style={styles.secondary}>‹</Text></Pressable>
-        <Pressable style={styles.play} onPress={toggle}><Text style={styles.playText}>{state.playing ? "Ⅱ" : "▶"}</Text></Pressable>
-        <Pressable onPress={next}><Text style={styles.secondary}>›</Text></Pressable>
-        <Pressable onPress={cycleRepeat}><Text style={[styles.secondary,{color:state.repeat!=="off"?gold:muted}]}>↻</Text></Pressable>
-      </View>
-      <View style={styles.seekRow}><Pressable onPress={() => seek(-10)}><Text style={styles.tool}>−10s</Text></Pressable><Text style={styles.tool}>Background playback enabled</Text><Pressable onPress={() => seek(10)}><Text style={styles.tool}>+10s</Text></Pressable></View>
-    </View>
-  </SafeAreaView>;
+export default function PlayerScreen(){
+ const {id}=useLocalSearchParams<{id:string}>(),router=useRouter();const {songs,state,next,previous,toggleShuffle,cycleRepeat,togglePlay}=useStore();
+ const song=useMemo(()=>songs.find(s=>s.id===id)||songs.find(s=>s.id===state.currentId),[songs,id,state.currentId]);const [position,setPosition]=useState(0);
+ useEffect(()=>{const t=setInterval(()=>{const p=getPlayer();if(p)setPosition(p.currentTime||0)},500);return()=>clearInterval(t)},[]);
+ if(!song)return <SafeAreaView style={styles.safe}><Text style={styles.empty}>Song unavailable.</Text></SafeAreaView>;
+ const seek=(delta:number)=>{const p=getPlayer();if(p)p.seekTo(Math.max(0,Math.min(song.duration||p.duration||0,(p.currentTime||0)+delta)))};
+ return <SafeAreaView style={styles.safe}><View style={styles.top}><Pressable onPress={()=>router.back()}><Text style={styles.back}>⌄</Text></Pressable><Text style={styles.now}>NOW PLAYING</Text><View/></View><View style={styles.body}><View style={styles.cover}><Text style={styles.note}>♫</Text></View><Text style={styles.title}>{song.title}</Text><Text style={styles.artist}>{song.artist} · {song.album}</Text><View style={styles.progress}><View style={[styles.progressFill,{width:(song.duration?Math.min(100,position/song.duration*100):0)+"%"}]}/></View><View style={styles.times}><Text style={styles.time}>{fmt(position)}</Text><Text style={styles.time}>{fmt(song.duration)}</Text></View><View style={styles.controls}><Pressable onPress={toggleShuffle}><Text style={[styles.secondary,{color:state.shuffle?gold:muted}]}>⤨</Text></Pressable><Pressable onPress={previous}><Text style={styles.secondary}>‹</Text></Pressable><Pressable style={styles.play} onPress={togglePlay}><Text style={styles.playText}>{state.playing?"Ⅱ":"▶"}</Text></Pressable><Pressable onPress={next}><Text style={styles.secondary}>›</Text></Pressable><Pressable onPress={cycleRepeat}><Text style={[styles.secondary,{color:state.repeat!=="off"?gold:muted}]}>↻</Text></Pressable></View><View style={styles.seekRow}><Pressable onPress={()=>seek(-10)}><Text style={styles.tool}>−10s</Text></Pressable><Text style={styles.tool}>Background playback enabled</Text><Pressable onPress={()=>seek(10)}><Text style={styles.tool}>+10s</Text></Pressable></View></View></SafeAreaView>;
 }
 function fmt(v:number){const s=Math.max(0,Math.floor(v||0));return Math.floor(s/60)+":"+String(s%60).padStart(2,"0")}
-const styles=StyleSheet.create({
-safe:{flex:1,backgroundColor:"#090909"},top:{height:58,flexDirection:"row",alignItems:"center",justifyContent:"space-between",paddingHorizontal:20},back:{fontSize:34,color:"#fff"},now:{color:muted,fontSize:11,fontWeight:"800",letterSpacing:2},body:{flex:1,alignItems:"center",paddingHorizontal:28,paddingTop:38},
-cover:{width:"100%",aspectRatio:1,borderRadius:26,backgroundColor:"#1e1a12",alignItems:"center",justifyContent:"center",borderWidth:1,borderColor:"#3a2d17"},note:{fontSize:110,color:gold},
-title:{color:"#fff",fontSize:24,fontWeight:"800",marginTop:28,textAlign:"center"},artist:{color:muted,marginTop:7,textAlign:"center"},progress:{height:5,backgroundColor:"#29251d",borderRadius:5,width:"100%",marginTop:35,overflow:"hidden"},progressFill:{height:"100%",backgroundColor:gold},times:{width:"100%",flexDirection:"row",justifyContent:"space-between",marginTop:8},times:{color:muted},
-controls:{width:"100%",flexDirection:"row",alignItems:"center",justifyContent:"space-between",marginTop:28},secondary:{color:"#fff",fontSize:38},play:{width:72,height:72,borderRadius:36,backgroundColor:gold,alignItems:"center",justifyContent:"center"},playText:{fontSize:28,color:"#090909",fontWeight:"900"},seekRow:{flexDirection:"row",alignItems:"center",justifyContent:"space-between",width:"100%",marginTop:25},tool:{color:muted,fontSize:12},empty:{color:"#fff",margin:30}
-});
+const styles=StyleSheet.create({safe:{flex:1,backgroundColor:"#090909"},top:{height:58,flexDirection:"row",alignItems:"center",justifyContent:"space-between",paddingHorizontal:20},back:{fontSize:34,color:"#fff"},now:{color:muted,fontSize:11,fontWeight:"800",letterSpacing:2},body:{flex:1,alignItems:"center",paddingHorizontal:28,paddingTop:38},cover:{width:"100%",aspectRatio:1,borderRadius:26,backgroundColor:"#1e1a12",alignItems:"center",justifyContent:"center",borderWidth:1,borderColor:"#3a2d17"},note:{fontSize:110,color:gold},title:{color:"#fff",fontSize:24,fontWeight:"800",marginTop:28,textAlign:"center"},artist:{color:muted,marginTop:7,textAlign:"center"},progress:{height:5,backgroundColor:"#29251d",borderRadius:5,width:"100%",marginTop:35,overflow:"hidden"},progressFill:{height:"100%",backgroundColor:gold},times:{width:"100%",flexDirection:"row",justifyContent:"space-between",marginTop:8},time:{color:muted},controls:{width:"100%",flexDirection:"row",alignItems:"center",justifyContent:"space-between",marginTop:28},secondary:{color:"#fff",fontSize:38},play:{width:72,height:72,borderRadius:36,backgroundColor:gold,alignItems:"center",justifyContent:"center"},playText:{fontSize:28,color:"#090909",fontWeight:"900"},seekRow:{flexDirection:"row",alignItems:"center",justifyContent:"space-between",width:"100%",marginTop:25},tool:{color:muted,fontSize:12},empty:{color:"#fff",margin:30}});
