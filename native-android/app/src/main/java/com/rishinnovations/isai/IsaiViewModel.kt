@@ -123,7 +123,8 @@ class IsaiViewModel(app: Application) : AndroidViewModel(app) {
     fun playAll(list: List<Song>, startIndex: Int = 0) {
         if (list.isEmpty()) return
         controller?.let { c ->
-            c.setMediaItems(list.map(::toMediaItem), startIndex.coerceIn(0, list.lastIndex))
+            c.setMediaItems(list.map(::toMediaItem))
+            c.seekToDefaultPosition(startIndex.coerceIn(0, list.lastIndex))
             c.prepare()
             c.play()
             publish()
