@@ -99,6 +99,10 @@ async function nativeLoad(s){
     return false;
   }
 }
+const isaiUIStyle=document.createElement("style");
+isaiUIStyle.id="isai-ui-fix";
+isaiUIStyle.textContent="#view{overflow-x:hidden}main>h1{margin-top:0}.online-wrap{margin-top:24px}.online-wrap .eyebrow{margin-bottom:10px}.online-search{align-items:center}.online-search input{height:56px}.online-search button{height:56px;min-width:108px}body.dark .online-search button{background:#f5f1e6;color:#111}";
+if(!document.getElementById("isai-ui-fix")) document.head.appendChild(isaiUIStyle);
 const view=document.querySelector("#view"),audio=document.querySelector("#audio"),picker=document.querySelector("#filePicker"),mini=document.querySelector("#miniPlayer"),toast=document.querySelector("#toast");
 const save=()=>{const snapshot={...state,favorites:[...state.favorites]};localStorage.setItem("isai-state",JSON.stringify(snapshot));window.ISAIBackend?.saveState(snapshot)};
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
