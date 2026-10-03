@@ -15,6 +15,7 @@ class MusicRepository(private val resolver: ContentResolver) {
             MediaStore.Audio.Media.TITLE,
             MediaStore.Audio.Media.ARTIST,
             MediaStore.Audio.Media.ALBUM,
+            MediaStore.Audio.Media.ALBUM_ID,
             MediaStore.Audio.Media.DURATION
         )
         val selection =
@@ -32,21 +33,31 @@ class MusicRepository(private val resolver: ContentResolver) {
             val title = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)
             val artist = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
             val album = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM)
+            val albumId = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID)
             val duration = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
 
             while (cursor.moveToNext()) {
                 val mediaId = cursor.getLong(id)
+                val albumIdValue = cursor.getLong(albumId)
+                val artwork = if (albumIdValue > 0L) {
+                    ContentUris.withAppendedId(
+                        "content://media/external/audio/albumart".let(android.net.Uri::parse),
+                        albumIdValue
+                    )
+                } else null
+
                 out += Song(
                     id = mediaId,
-                    title = cursor.getString(title) ?: "Unknown title",
+                    title = cursor.getString(title)?.takeIf { it.isNotBlank() } ?: "Unknown title",
                     artist = cursor.getString(artist)
-                        ?.takeIf { it != "<unknown>" }
+                        ?.takeIf { it.isNotBlank() && it != "<unknown>" }
                         ?: "Unknown artist",
                     album = cursor.getString(album)
-                        ?.takeIf { it != "<unknown>" }
+                        ?.takeIf { it.isNotBlank() && it != "<unknown>" }
                         ?: "Unknown album",
                     durationMs = cursor.getLong(duration),
-                    uri = ContentUris.withAppendedId(collection, mediaId)
+                    uri = ContentUris.withAppendedId(collection, mediaId),
+                    artworkUri = artwork
                 )
             }
         }
