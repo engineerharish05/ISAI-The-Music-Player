@@ -44,18 +44,21 @@ jobs:
         run: |
           rm -rf www
           mkdir -p www/assets
-          cp index.html style.css app.js final.js online.js manifest.webmanifest sw.js www/
+          cp index.html style.css backend.js app.js final.js online.js manifest.webmanifest sw.js www/
           cp assets/isai-logo.jpg www/assets/
 
       - name: Verify web bundle
         run: |
           test -f www/index.html
+          test -f www/backend.js
           test -f www/final.js
           test -f www/online.js
           test -f www/manifest.webmanifest
           test -f www/sw.js
           grep -q 'final.js' www/index.html
           grep -q 'online.js' www/index.html
+          grep -q 'backend.js' www/index.html
+          grep -q 'isNativePlatform' www/index.html
 
       - name: Create Android project
         run: npx cap add android
