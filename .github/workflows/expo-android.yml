@@ -1,0 +1,25 @@
+name: ISAI Expo Android
+
+on:
+  push:
+    branches: ["expo-native"]
+    paths: ["expo/**"]
+  pull_request:
+    paths: ["expo/**"]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: expo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: expo/package-lock.json
+      - run: npm install
+      - run: npx expo-doctor
+      - run: npm run typecheck
