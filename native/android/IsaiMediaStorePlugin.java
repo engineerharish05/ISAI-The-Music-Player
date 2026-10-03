@@ -182,11 +182,11 @@ public class IsaiMediaStorePlugin extends Plugin {
                     String title = cursor.getString(titleCol);
                     String artist = cursor.getString(artistCol);
                     String album = cursor.getString(albumCol);
-                    if (title == null || title.trim().isEmpty()) title = displayNameOrFallback(cursor, displayCol);
                     long albumId = cursor.getLong(albumIdCol);
                     long duration = cursor.getLong(durationCol);
                     String displayName = cursor.getString(displayCol);
                     String mime = cursor.getString(mimeCol);
+                    if (title == null || title.trim().isEmpty()) title = displayNameOrFallback(cursor, displayCol);
 
                     if (mime == null || !mime.toLowerCase().startsWith("audio/")) {
                         continue;
