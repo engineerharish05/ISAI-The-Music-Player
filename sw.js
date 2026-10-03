@@ -1,5 +1,5 @@
-const CACHE_NAME="isai-shell-v2";
-const APP_SHELL=["./","./index.html","./style.css","./app.js","./final.js","./manifest.webmanifest","./sw.js","./assets/isai-logo.jpg"];
+const CACHE_NAME="isai-shell-v3";
+const APP_SHELL=["./","./index.html","./style.css","./app.js","./final.js","./online.js","./manifest.webmanifest","./sw.js","./assets/isai-logo.jpg"];
 self.addEventListener("install",e=>e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(APP_SHELL)).then(()=>self.skipWaiting())));
 self.addEventListener("activate",e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
 self.addEventListener("fetch",e=>{
