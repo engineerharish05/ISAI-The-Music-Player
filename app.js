@@ -90,7 +90,7 @@ async function nativeLoad(s){
   }
 }
 const view=document.querySelector("#view"),audio=document.querySelector("#audio"),picker=document.querySelector("#filePicker"),mini=document.querySelector("#miniPlayer"),toast=document.querySelector("#toast");
-const save=()=>localStorage.setItem("isai-state",JSON.stringify({...state,favorites:[...state.favorites]}));
+const save=()=>{const snapshot={...state,favorites:[...state.favorites]};localStorage.setItem("isai-state",JSON.stringify(snapshot));window.ISAIBackend?.saveState(snapshot)};
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const fmt=s=>Number.isFinite(s)?Math.floor(s/60)+":"+String(Math.floor(s%60)).padStart(2,"0"):"0:00";
 const art=s=>s?(s.cover?'<div class="song-art"><img src="'+s.cover+'" alt=""></div>':'<div class="song-art" style="background:'+(s.color||"linear-gradient(145deg,#171713,#b48b32)")+'">♫</div>'):'<div class="song-art empty-art">♪</div>';
@@ -220,6 +220,23 @@ async function finishYouTubeLogin(){const q=new URLSearchParams(location.search)
 function services(){const c=serviceConfig(),sp=!!localStorage.getItem("isai-spotify-token"),yt=!!localStorage.getItem("isai-youtube-token");modal("Connected services",'<div class="setting"><div><b>Spotify</b><span>'+(sp?"Connected":"Not connected")+'</span></div><button class="more" data-service="spotify-login">'+(sp?"✓":"Connect")+'</button></div><div class="setting"><div><b>YouTube</b><span>'+(yt?"Connected":"Not connected")+'</span></div><button class="more" data-service="youtube-login">'+(yt?"✓":"Connect")+'</button></div><input id="spClient" class="search" value="'+esc(c.spotifyClientId||"")+'" placeholder="Spotify Client ID"><input id="spRedirect" class="search" value="'+esc(c.spotifyRedirect||"")+'" placeholder="Spotify HTTPS redirect URI"><input id="ytClient" class="search" value="'+esc(c.youtubeClientId||"")+'" placeholder="Google Client ID"><input id="ytRedirect" class="search" value="'+esc(c.youtubeRedirect||"")+'" placeholder="YouTube HTTPS redirect URI"><button class="pill primary" id="saveServices" style="width:100%;margin-top:12px">Save connection settings</button>');document.querySelector("#saveServices").onclick=()=>{saveServiceConfig({spotifyClientId:document.querySelector("#spClient").value.trim(),spotifyRedirect:document.querySelector("#spRedirect").value.trim(),youtubeClientId:document.querySelector("#ytClient").value.trim(),youtubeRedirect:document.querySelector("#ytRedirect").value.trim()});document.querySelector(".modal")?.remove();msg("Connection settings saved")};document.querySelector("[data-service=\"spotify-login\"]")?.addEventListener("click",spotifyLogin);document.querySelector("[data-service=\"youtube-login\"]")?.addEventListener("click",youtubeLogin)}
 function newPlaylist(){const n=prompt("Playlist name");if(!n)return;state.playlists[n]=[];save();haptic("MEDIUM");render();msg("Playlist created")}
 function importFiles(){picker.click()}
+
+async function restoreWebLibrary(){
+  if(isNative||!window.ISAIBackend)return;
+  try{
+    const restored=await window.ISAIBackend.restoreImportedTracks();
+    if(!restored.length)return;
+    restored.forEach(s=>{
+      if(!songs.some(existing=>String(existing.id)===String(s.id))){
+        songs.push(s);
+        urls.push(s.src);
+      }
+    });
+    render();
+    msg(restored.length+" saved local songs restored");
+  }catch(error){console.warn("ISAI web library restore failed:",error)}
+}
+
 picker.onchange=e=>{
   const files=[...e.target.files].filter(f=>f.type.startsWith("audio/") || /\.(mp3|m4a|aac|wav|ogg|flac|opus|webm)$/i.test(f.name));
   if(!files.length){picker.value="";msg("Choose an audio file");return;}
@@ -229,6 +246,7 @@ picker.onchange=e=>{
     urls.push(src);
     const item={id,title:f.name.replace(/\.[^.]+$/,""),artist:"Local file",album:"Imported",genre:"Local",duration:0,src,color:"linear-gradient(145deg,#171713,#b48b32)"};
     songs.push(item);
+    window.ISAIBackend?.saveImportedTrack(item,f);
     const probe=new Audio(src);
     probe.onloadedmetadata=()=>{item.duration=Number.isFinite(probe.duration)?probe.duration:0;render()};
   });
@@ -278,7 +296,7 @@ setInterval(async ()=>{
     if(document.querySelector(".player"))player();
     msg("Sleep timer ended");
   }
-},1000);audio.volume=state.volume;document.querySelectorAll(".nav").forEach(x=>x.onclick=()=>setPage(x.dataset.page));finishSpotifyLogin();finishYouTubeLogin();render();initNativeMusic();setInterval(()=>{if(nativeLibraryReady&&state.current&&state.playing)progress()},1000);
+},1000);audio.volume=state.volume;document.querySelectorAll(".nav").forEach(x=>x.onclick=()=>setPage(x.dataset.page));finishSpotifyLogin();finishYouTubeLogin();render();restoreWebLibrary();initNativeMusic();setInterval(()=>{if(nativeLibraryReady&&state.current&&state.playing)progress()},1000);
 
 /* ISAI mobile interaction layer: gestures + haptic feedback */
 const touchState={kind:null,x:0,y:0,moved:false,longPress:false,timer:null};
