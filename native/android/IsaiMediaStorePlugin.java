@@ -131,6 +131,14 @@ public class IsaiMediaStorePlugin extends Plugin {
         }
     }
 
+    private String displayNameOrFallback(Cursor cursor, int displayCol) {
+        if (displayCol >= 0) {
+            String value = cursor.getString(displayCol);
+            if (value != null && !value.trim().isEmpty()) return value;
+        }
+        return "Unknown track";
+    }
+
     private void scanInternal(PluginCall call) {
         ContentResolver resolver = getContext().getContentResolver();
         Uri collection = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
@@ -146,8 +154,9 @@ public class IsaiMediaStorePlugin extends Plugin {
             MediaStore.Audio.Media.MIME_TYPE
         };
 
-        String selection = MediaStore.Audio.Media.IS_MUSIC + " != 0 AND "
+        String selection = MediaStore.Audio.Media.MIME_TYPE + " LIKE ? AND "
             + MediaStore.Audio.Media.DURATION + " > 0";
+        String[] selectionArgs = {"audio/%"};
 
         JSArray media = new JSArray();
 
@@ -155,7 +164,7 @@ public class IsaiMediaStorePlugin extends Plugin {
             collection,
             projection,
             selection,
-            null,
+            selectionArgs,
             MediaStore.Audio.Media.TITLE + " COLLATE NOCASE ASC"
         )) {
             if (cursor != null) {
@@ -173,6 +182,7 @@ public class IsaiMediaStorePlugin extends Plugin {
                     String title = cursor.getString(titleCol);
                     String artist = cursor.getString(artistCol);
                     String album = cursor.getString(albumCol);
+                    if (title == null || title.trim().isEmpty()) title = displayNameOrFallback(cursor, displayCol);
                     long albumId = cursor.getLong(albumIdCol);
                     long duration = cursor.getLong(durationCol);
                     String displayName = cursor.getString(displayCol);
