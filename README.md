@@ -22,6 +22,12 @@ ISAI is a mobile-first music-player interface built around the uploaded ISAI ide
 - Local browser persistence for preferences, favorites, history and playlists
 - Responsive mobile and desktop layout
 
+## Licensing
+
+Original ISAI code is intended to use the custom **ISAI Custom Open Source License 1.0**. The current repository also contains SimpMusic-derived native Android code that remains under GPL-3.0. See [LICENSE-ISAI.md](LICENSE-ISAI.md) and [NOTICE-SIMPMUSIC.md](NOTICE-SIMPMUSIC.md).
+
+> The custom ISAI license does not override third-party licenses.
+
 ## Important scope
 
 This repository is currently a browser-based ISAI prototype. It does not include SimpMusic's YouTube Music extraction/backend, account system, Android Auto integration, online lyrics providers, SponsorBlock, or other service-specific infrastructure.
