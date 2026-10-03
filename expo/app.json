@@ -1,45 +1,16 @@
 {
   "expo":{
-    "name":"ISAI",
-    "slug":"isai-music-player",
-    "version":"2.0.0",
-    "orientation":"portrait",
-    "icon":"../assets/isai-logo.jpg",
-    "scheme":"isai",
-    "userInterfaceStyle":"automatic",
-    "newArchEnabled":true,
+    "name":"ISAI","slug":"isai-music-player","version":"2.0.0","orientation":"portrait",
+    "scheme":"isai","userInterfaceStyle":"automatic","newArchEnabled":true,
     "plugins":[
       "expo-router",
-      [
-        "expo-audio",
-        {
-          "enableBackgroundPlayback":true,
-          "enableBackgroundRecording":false,
-          "recordAudioAndroid":false
-        }
-      ],
-      [
-        "expo-media-library",
-        {
-          "photosPermission":"ISAI needs access to your media library to find your music.",
-          "savePhotosPermission":false,
-          "isAccessMediaLocationEnabled":false
-        }
-      ]
+      ["expo-audio",{"enableBackgroundPlayback":true,"enableBackgroundRecording":false,"recordAudioAndroid":false}],
+      ["expo-media-library",{"granularPermissions":["audio"],"isAccessMediaLocationEnabled":false}]
     ],
     "android":{
       "package":"com.rishinnovations.isai",
-      "adaptiveIcon":{
-        "foregroundImage":"../assets/isai-logo.jpg",
-        "backgroundColor":"#090909"
-      },
-      "permissions":[
-        "android.permission.FOREGROUND_SERVICE",
-        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
-      ]
+      "permissions":["android.permission.FOREGROUND_SERVICE","android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"]
     },
-    "experiments":{
-      "typedRoutes":true
-    }
+    "experiments":{"typedRoutes":true}
   }
 }
