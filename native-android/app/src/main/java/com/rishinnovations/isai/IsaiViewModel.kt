@@ -2,6 +2,7 @@ package com.rishinnovations.isai
 
 import android.app.Application
 import android.content.ComponentName
+import android.content.SharedPreferences
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
@@ -17,10 +18,14 @@ import java.util.concurrent.Executors
 
 class IsaiViewModel(app: Application) : AndroidViewModel(app) {
     private val repository = MusicRepository(app.contentResolver)
+    private val prefs: SharedPreferences = app.getSharedPreferences("isai_player_state", 0)
+
     private val _songs = MutableStateFlow<List<Song>>(emptyList())
     val songs: StateFlow<List<Song>> = _songs
+
     private val _player = MutableStateFlow(PlayerState())
     val playerState: StateFlow<PlayerState> = _player
+
     private val executor = Executors.newSingleThreadExecutor()
     private var controller: MediaController? = null
     private var queuedSongs: List<Song> = emptyList()
@@ -40,13 +45,21 @@ class IsaiViewModel(app: Application) : AndroidViewModel(app) {
 
     fun connect() {
         if (controller != null) return
-        val token = SessionToken(getApplication(), ComponentName(getApplication(), PlaybackService::class.java))
+        val token = SessionToken(
+            getApplication(),
+            ComponentName(getApplication(), PlaybackService::class.java)
+        )
         val future = MediaController.Builder(getApplication(), token).buildAsync()
         future.addListener({
             runCatching {
                 controller = future.get().also {
                     it.addListener(listener)
-                    if (queuedSongs.isNotEmpty()) install(it, queuedSongs, _player.value.queueIndex.coerceAtLeast(0), false)
+                    restoreSettings(it)
+                    if (queuedSongs.isNotEmpty()) {
+                        val safeIndex = _player.value.queueIndex
+                            .coerceIn(0, queuedSongs.lastIndex)
+                        install(it, queuedSongs, safeIndex, false)
+                    }
                     sync(it)
                 }
             }
@@ -55,31 +68,76 @@ class IsaiViewModel(app: Application) : AndroidViewModel(app) {
 
     fun scan() {
         viewModelScope.launch {
-            _songs.value = repository.loadLocalSongs()
-            if (_player.value.queue.isEmpty()) replaceQueue(_songs.value)
+            val scanned = runCatching { repository.loadLocalSongs() }.getOrDefault(emptyList())
+            _songs.value = scanned
+
+            val savedIds = prefs.getString("queue_ids", null)
+                ?.split(',')
+                ?.mapNotNull(String::toLongOrNull)
+                .orEmpty()
+            val restored = savedIds.mapNotNull { id -> scanned.firstOrNull { it.id == id } }
+
+            if (restored.isNotEmpty()) {
+                val safeIndex = prefs.getInt("queue_index", 0)
+                    .coerceIn(0, restored.lastIndex)
+                queuedSongs = restored
+                _player.value = _player.value.copy(
+                    queue = restored,
+                    queueIndex = safeIndex,
+                    currentSong = restored[safeIndex]
+                )
+                controller?.let { install(it, restored, safeIndex, true) }
+            } else if (_player.value.queue.isEmpty() && scanned.isNotEmpty()) {
+                replaceQueue(scanned)
+            }
         }
     }
 
     fun replaceQueue(songs: List<Song>, index: Int = 0, playNow: Boolean = false) {
         if (songs.isEmpty()) return
-        val safe = index.coerceIn(0, songs.lastIndex)
+        val safeIndex = index.coerceIn(0, songs.lastIndex)
         queuedSongs = songs
-        _player.value = _player.value.copy(queue = songs, queueIndex = safe)
-        controller?.let { install(it, songs, safe, playNow) }
+        _player.value = _player.value.copy(
+            queue = songs,
+            queueIndex = safeIndex,
+            currentSong = songs[safeIndex]
+        )
+        persistQueue(songs, safeIndex)
+        controller?.let { install(it, songs, safeIndex, playNow) }
     }
 
     fun play(song: Song) {
-        val queue = _player.value.queue.ifEmpty { _songs.value }
-        val position = queue.indexOfFirst { it.id == song.id }.let { if (it < 0) 0 else it }
-        replaceQueue(if (queue.isEmpty()) listOf(song) else queue, position, true)
+        val baseQueue = _player.value.queue.ifEmpty { _songs.value }
+        val queue = if (baseQueue.isEmpty()) listOf(song) else baseQueue
+        val index = queue.indexOfFirst { it.id == song.id }.takeIf { it >= 0 } ?: 0
+        replaceQueue(queue, index, true)
     }
 
-    fun playAll() = _songs.value.takeIf { it.isNotEmpty() }?.let { replaceQueue(it, 0, true) }
-    fun togglePlayPause() = controller?.let { if (it.isPlaying) it.pause() else it.play() }
-    fun next() = controller?.seekToNextMediaItem()
-    fun previous() = controller?.seekToPreviousMediaItem()
-    fun seekTo(ms: Long) = controller?.seekTo(ms.coerceAtLeast(0L))
-    fun toggleShuffle() = controller?.let { it.shuffleModeEnabled = !it.shuffleModeEnabled }
+    fun playAll() {
+        _songs.value.takeIf { it.isNotEmpty() }?.let { replaceQueue(it, 0, true) }
+    }
+
+    fun togglePlayPause() {
+        controller?.let { if (it.isPlaying) it.pause() else it.play() }
+    }
+
+    fun next() {
+        controller?.seekToNextMediaItem()
+    }
+
+    fun previous() {
+        controller?.seekToPreviousMediaItem()
+    }
+
+    fun seekTo(ms: Long) {
+        val safe = ms.coerceAtLeast(0L)
+        controller?.seekTo(safe)
+        prefs.edit().putLong("position_ms", safe).apply()
+    }
+
+    fun toggleShuffle() {
+        controller?.let { it.shuffleModeEnabled = !it.shuffleModeEnabled }
+    }
 
     fun cycleRepeat() {
         controller?.let {
@@ -91,10 +149,23 @@ class IsaiViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    private fun install(player: MediaController, songs: List<Song>, index: Int, playNow: Boolean) {
+    private fun restoreSettings(player: MediaController) {
+        player.shuffleModeEnabled = prefs.getBoolean("shuffle", false)
+        player.repeatMode = prefs.getInt("repeat_mode", Player.REPEAT_MODE_OFF)
+    }
+
+    private fun install(
+        player: MediaController,
+        songs: List<Song>,
+        index: Int,
+        resumePosition: Boolean
+    ) {
         player.setMediaItems(songs.map(::toItem), index, 0L)
         player.prepare()
-        if (playNow) player.play()
+        if (resumePosition) {
+            val position = prefs.getLong("position_ms", 0L)
+            if (position > 0L) player.seekTo(position)
+        }
     }
 
     private fun toItem(song: Song) = MediaItem.Builder()
@@ -107,17 +178,19 @@ class IsaiViewModel(app: Application) : AndroidViewModel(app) {
                 .setAlbumTitle(song.album)
                 .setArtworkUri(song.artworkUri)
                 .build()
-        ).build()
+        )
+        .build()
 
     private fun sync(player: Player) {
         val queue = _player.value.queue
         val index = player.currentMediaItemIndex
         val current = queue.getOrNull(index)
-        _player.value = _player.value.copy(
+
+        val next = _player.value.copy(
             currentSong = current,
             isPlaying = player.isPlaying,
-            positionMs = player.currentPosition.coerceAtLeast(0),
-            durationMs = player.duration.takeIf { it > 0 } ?: current?.durationMs ?: 0,
+            positionMs = player.currentPosition.coerceAtLeast(0L),
+            durationMs = player.duration.takeIf { it > 0L } ?: current?.durationMs ?: 0L,
             queueIndex = index,
             shuffle = player.shuffleModeEnabled,
             repeatMode = when (player.repeatMode) {
@@ -126,6 +199,28 @@ class IsaiViewModel(app: Application) : AndroidViewModel(app) {
                 else -> RepeatMode.OFF
             }
         )
+        _player.value = next
+
+        if (current != null) persistQueue(queue, index)
+        prefs.edit()
+            .putLong("position_ms", next.positionMs)
+            .putBoolean("shuffle", next.shuffle)
+            .putInt(
+                "repeat_mode",
+                when (next.repeatMode) {
+                    RepeatMode.ALL -> Player.REPEAT_MODE_ALL
+                    RepeatMode.ONE -> Player.REPEAT_MODE_ONE
+                    else -> Player.REPEAT_MODE_OFF
+                }
+            )
+            .apply()
+    }
+
+    private fun persistQueue(songs: List<Song>, index: Int) {
+        prefs.edit()
+            .putString("queue_ids", songs.joinToString(",") { it.id.toString() })
+            .putInt("queue_index", index.coerceAtLeast(0))
+            .apply()
     }
 
     override fun onCleared() {
