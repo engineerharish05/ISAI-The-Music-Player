@@ -24,7 +24,7 @@ ISAI is a mobile-first music-player interface built around the uploaded ISAI ide
 
 ## Licensing
 
-Original ISAI code is intended to use the custom **ISAI Custom Open Source License 1.0**. The current repository also contains SimpMusic-derived native Android code that remains under GPL-3.0. See [LICENSE-ISAI.md](LICENSE-ISAI.md) and [NOTICE-SIMPMUSIC.md](NOTICE-SIMPMUSIC.md).
+Original ISAI code is intended to use the custom **ISAI Custom Open Source License 1.0**. The native Android player implementation is independently implemented for ISAI. See [LICENSE-ISAI.md](LICENSE-ISAI.md) and [NOTICE-SIMPMUSIC.md](NOTICE-SIMPMUSIC.md).
 
 > The custom ISAI license does not override third-party licenses.
 
@@ -36,7 +36,7 @@ The UI and interaction model are implemented separately for ISAI rather than cop
 
 ## Reference
 
-SimpMusic is an independent open-source project by maxrave-dev. This project uses it as a public reference for music-player interaction patterns and feature organization.
+SimpMusic and other music players may be consulted as public UX references; ISAI's implementation is independently written.
 
 ## Run
 
