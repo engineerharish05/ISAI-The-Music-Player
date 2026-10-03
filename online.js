@@ -26,7 +26,7 @@
   function save(){ localStorage.setItem(ONLINE_KEY, JSON.stringify(state)); }
   function apiBase(){
     const configured=window.ISAI_API_BASE;
-    if(configured) return String(configured).replace(/\\/$/,"");
+    if(configured) return String(configured).replace(/\/$/,"");
     return window.Capacitor?.isNativePlatform?.()
       ? "https://isai-the-music-player.vercel.app/api"
       : "/api";
