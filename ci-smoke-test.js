@@ -57,8 +57,8 @@ must(native, /@CapacitorPlugin\(\s*name = "IsaiMediaStore"/s, "native plugin reg
 must(native, /public void scan\(/, "native scan method");
 must(native, /public void prepare\(/, "native prepare method");
 must(native, /startPlaybackService/, "foreground playback bridge");
-must(pkg.dependencies["@capgo/capacitor-native-audio"], "NativeAudio dependency");
-must(pkg.dependencies["@capacitor/haptics"], "Haptics dependency");
+if(!pkg.dependencies["@capgo/capacitor-native-audio"]) throw new Error("Smoke check failed: NativeAudio dependency");
+if(!pkg.dependencies["@capacitor/haptics"]) throw new Error("Smoke check failed: Haptics dependency");
 must(workflow, /node --check app\.js/, "JavaScript validation");
 must(workflow, /Build release APK and bundle/, "release build");
 must(workflow, /Upload release APK/, "release APK artifact");
