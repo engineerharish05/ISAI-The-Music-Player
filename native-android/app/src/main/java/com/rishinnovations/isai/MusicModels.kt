@@ -12,9 +12,7 @@ data class Song(
     val artworkUri: Uri? = null
 )
 
-enum class RepeatMode {
-    OFF, ALL, ONE
-}
+enum class RepeatMode { OFF, ALL, ONE }
 
 data class PlayerState(
     val currentSong: Song? = null,
