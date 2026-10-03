@@ -139,7 +139,12 @@ view.innerHTML='<section class="hero card"><div class="eyebrow">ISAI - The Music
 wire()
 }
 function explore(){
-view.innerHTML='<div class="eyebrow">Explore</div><h1>Find your sound.</h1><input id="search" class="search" placeholder="Songs, artists, albums…" autocomplete="off"><section class="section"><div class="chips">'+["All",...new Set(songs.map(s=>s.genre))].map((g,i)=>'<button class="chip '+(i===0?"active":"")+'" data-genre="'+esc(g)+'">'+esc(g)+'</button>').join("")+'</div></section><section class="section"><div class="row"><h2>All music</h2><button class="more" data-action="shuffle">⤨</button></div><div id="results" class="card list">'+songs.map(row).join("")+'</div></section>';
+view.innerHTML='<div class="eyebrow">Explore</div><h1>Find your sound.</h1>'+
+'<input id="search" class="search" placeholder="Songs, artists, albums…" autocomplete="off">'+
+'<section class="section"><div class="chips">'+["All",...new Set(songs.map(s=>s.genre))].map((g,i)=>'<button class="chip '+(i===0?"active":"")+'" data-genre="'+esc(g)+'">'+esc(g)+'</button>').join("")+'</div></section>'+
+'<section id="onlineMount" class="online-section"></section>'+
+'<section class="section explore-local"><div class="row"><div><div class="eyebrow">Your library</div><h2>All music</h2></div><button class="more" data-action="shuffle" aria-label="Shuffle all music">⤨</button></div>'+
+'<div id="results" class="card list">'+songs.map(row).join("")+'</div></section>';
 wire()
 }
 function library(){
