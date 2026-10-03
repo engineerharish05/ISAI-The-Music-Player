@@ -15,3 +15,12 @@ The player uses Android MediaStore and AndroidX Media3/ExoPlayer APIs as technic
 ## Branding
 
 The ISAI name, logo, visual identity, and original branding are not granted as trademarks by the ISAI software license.
+
+## Free/open-source references used during the independent implementation
+
+The project was checked against permissively licensed music-player implementations for feature and architecture ideas. No GPL source was copied into the current native player.
+
+- Resonate — MIT License: https://github.com/kimhabkhun/resonate
+- Rhythm — MIT License: https://github.com/Aortax213/Music
+
+These repositories were used as public references for concepts such as Compose + Media3 playback, persistent library state, playlists, and player lifecycle. The ISAI native implementation remains independently written.
