@@ -31,3 +31,5 @@ jobs:
         with:
           name: isai-native-v2-release
           path: native-android/app/build/outputs/apk/release/app-release-unsigned.apk
+
+# Build verification trigger
