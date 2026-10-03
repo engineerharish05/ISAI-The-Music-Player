@@ -16,90 +16,70 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.Executors
 
 class IsaiViewModel(app: Application) : AndroidViewModel(app) {
-    private val repo = MusicRepository(app.contentResolver)
+    private val repository = MusicRepository(app.contentResolver)
     private val _songs = MutableStateFlow<List<Song>>(emptyList())
     val songs: StateFlow<List<Song>> = _songs
-    private val _playerState = MutableStateFlow(PlayerState())
-    val playerState: StateFlow<PlayerState> = _playerState
-    private val controllerExecutor = Executors.newSingleThreadExecutor()
+    private val _player = MutableStateFlow(PlayerState())
+    val playerState: StateFlow<PlayerState> = _player
+    private val executor = Executors.newSingleThreadExecutor()
     private var controller: MediaController? = null
-    private var pendingQueue: List<Song> = emptyList()
+    private var queuedSongs: List<Song> = emptyList()
 
     private val listener = object : Player.Listener {
-        override fun onEvents(player: Player, events: Player.Events) {
-            publish(player)
-        }
+        override fun onEvents(player: Player, events: Player.Events) = sync(player)
     }
 
     init {
         viewModelScope.launch {
             while (true) {
-                controller?.let(::publish)
-                delay(500)
+                controller?.let(::sync)
+                delay(250)
             }
-        }
-    }
-
-    fun scan() {
-        viewModelScope.launch {
-            _songs.value = repo.scan()
-            if (_playerState.value.queue.isEmpty()) setQueue(_songs.value)
         }
     }
 
     fun connect() {
         if (controller != null) return
-        val token = SessionToken(
-            getApplication(),
-            ComponentName(getApplication(), PlaybackService::class.java)
-        )
+        val token = SessionToken(getApplication(), ComponentName(getApplication(), PlaybackService::class.java))
         val future = MediaController.Builder(getApplication(), token).buildAsync()
         future.addListener({
             runCatching {
-                controller = future.get().also { c ->
-                    c.addListener(listener)
-                    if (pendingQueue.isNotEmpty()) {
-                        val items = pendingQueue.map(::toMediaItem)
-                        c.setMediaItems(items, 0, 0L)
-                        c.prepare()
-                    }
-                    publish(c)
+                controller = future.get().also {
+                    it.addListener(listener)
+                    if (queuedSongs.isNotEmpty()) install(it, queuedSongs, _player.value.queueIndex.coerceAtLeast(0), false)
+                    sync(it)
                 }
             }
-        }, controllerExecutor)
+        }, executor)
     }
 
-    fun setQueue(songs: List<Song>, startIndex: Int = 0, autoPlay: Boolean = false) {
-        if (songs.isEmpty()) return
-        val safeIndex = startIndex.coerceIn(0, songs.lastIndex)
-        pendingQueue = songs
-        _playerState.value = _playerState.value.copy(queue = songs, queueIndex = safeIndex)
+    fun scan() {
+        viewModelScope.launch {
+            _songs.value = repository.loadLocalSongs()
+            if (_player.value.queue.isEmpty()) replaceQueue(_songs.value)
+        }
+    }
 
-        val c = controller ?: return
-        val items = songs.map(::toMediaItem)
-        c.setMediaItems(items, safeIndex, 0L)
-        c.prepare()
-        if (autoPlay) c.play()
+    fun replaceQueue(songs: List<Song>, index: Int = 0, playNow: Boolean = false) {
+        if (songs.isEmpty()) return
+        val safe = index.coerceIn(0, songs.lastIndex)
+        queuedSongs = songs
+        _player.value = _player.value.copy(queue = songs, queueIndex = safe)
+        controller?.let { install(it, songs, safe, playNow) }
     }
 
     fun play(song: Song) {
-        val queue = _playerState.value.queue.ifEmpty { _songs.value }
-        val actualQueue = queue.ifEmpty { listOf(song) }
-        val index = actualQueue.indexOfFirst { it.id == song.id }.takeIf { it >= 0 } ?: 0
-        setQueue(actualQueue, index, autoPlay = true)
+        val queue = _player.value.queue.ifEmpty { _songs.value }
+        val position = queue.indexOfFirst { it.id == song.id }.let { if (it < 0) 0 else it }
+        replaceQueue(if (queue.isEmpty()) listOf(song) else queue, position, true)
     }
 
-    fun playAll() {
-        if (_songs.value.isNotEmpty()) setQueue(_songs.value, 0, autoPlay = true)
-    }
-
-    fun pause() { controller?.pause() }
-    fun resume() { controller?.play() }
-    fun togglePlayPause() { controller?.let { if (it.isPlaying) it.pause() else it.play() } }
-    fun next() { controller?.seekToNext() }
-    fun previous() { controller?.seekToPrevious() }
-    fun seekTo(positionMs: Long) { controller?.seekTo(positionMs.coerceAtLeast(0L)) }
-    fun toggleShuffle() { controller?.let { it.shuffleModeEnabled = !it.shuffleModeEnabled } }
+    fun playAll() = _songs.value.takeIf { it.isNotEmpty() }?.let { replaceQueue(it, 0, true) }
+    fun togglePlayPause() = controller?.let { if (it.isPlaying) it.pause() else it.play() }
+    fun next() = controller?.seekToNextMediaItem()
+    fun previous() = controller?.seekToPreviousMediaItem()
+    fun seekTo(ms: Long) = controller?.seekTo(ms.coerceAtLeast(0L))
+    fun toggleShuffle() = controller?.let { it.shuffleModeEnabled = !it.shuffleModeEnabled }
 
     fun cycleRepeat() {
         controller?.let {
@@ -111,46 +91,47 @@ class IsaiViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    private fun toMediaItem(song: Song): MediaItem =
-        MediaItem.Builder()
-            .setMediaId(song.id.toString())
-            .setUri(song.uri)
-            .setMediaMetadata(
-                MediaMetadata.Builder()
-                    .setTitle(song.title)
-                    .setArtist(song.artist)
-                    .setAlbumTitle(song.album)
-                    .setArtworkUri(song.artworkUri)
-                    .build()
-            )
-            .build()
+    private fun install(player: MediaController, songs: List<Song>, index: Int, playNow: Boolean) {
+        player.setMediaItems(songs.map(::toItem), index, 0L)
+        player.prepare()
+        if (playNow) player.play()
+    }
 
-    private fun publish(player: Player) {
-        val queue = _playerState.value.queue
+    private fun toItem(song: Song) = MediaItem.Builder()
+        .setMediaId(song.id.toString())
+        .setUri(song.uri)
+        .setMediaMetadata(
+            MediaMetadata.Builder()
+                .setTitle(song.title)
+                .setArtist(song.artist)
+                .setAlbumTitle(song.album)
+                .setArtworkUri(song.artworkUri)
+                .build()
+        ).build()
+
+    private fun sync(player: Player) {
+        val queue = _player.value.queue
         val index = player.currentMediaItemIndex
         val current = queue.getOrNull(index)
-        val repeat = when (player.repeatMode) {
-            Player.REPEAT_MODE_ALL -> RepeatMode.ALL
-            Player.REPEAT_MODE_ONE -> RepeatMode.ONE
-            else -> RepeatMode.OFF
-        }
-        _playerState.value = PlayerState(
+        _player.value = _player.value.copy(
             currentSong = current,
             isPlaying = player.isPlaying,
-            positionMs = player.currentPosition.coerceAtLeast(0L),
-            durationMs = player.duration.takeIf { it > 0L } ?: current?.durationMs ?: 0L,
-            queue = queue,
+            positionMs = player.currentPosition.coerceAtLeast(0),
+            durationMs = player.duration.takeIf { it > 0 } ?: current?.durationMs ?: 0,
             queueIndex = index,
             shuffle = player.shuffleModeEnabled,
-            repeatMode = repeat
+            repeatMode = when (player.repeatMode) {
+                Player.REPEAT_MODE_ALL -> RepeatMode.ALL
+                Player.REPEAT_MODE_ONE -> RepeatMode.ONE
+                else -> RepeatMode.OFF
+            }
         )
     }
 
     override fun onCleared() {
         controller?.removeListener(listener)
         controller?.release()
-        controller = null
-        controllerExecutor.shutdown()
+        executor.shutdown()
         super.onCleared()
     }
 }
