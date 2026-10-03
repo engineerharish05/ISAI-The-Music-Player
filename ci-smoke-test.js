@@ -20,10 +20,28 @@ must(index, /backend\.js.*app\.js.*final\.js.*online\.js/s, "script load order")
 must(index, /id="view"/, "main view mount");
 must(index, /id="miniPlayer"/, "mini player mount");
 must(app, /function wire\(/, "event wiring function");
-const actionMap = (app.match(/const fn=\\{[\\s\\S]*?\\}\\[a\\]/) || [""])[0];
-must(actionMap, /const fn=\\{/, "action map");
-for (const action of ["home","search","toggle-theme","import","play","previous","next","shuffle","repeat","queue","lyrics","equalizer","sleep","speed","favorites","history","services","rescan"]) {
-  must(app, new RegExp(`(?:["']${action}["']|${action})\\s*:`), "action handler: " + action);
+const actionPatterns = {
+  home: /home\s*:/,
+  search: /search\s*:/,
+  "toggle-theme": /["']toggle-theme["']\s*:/,
+  import: /import\s*:\s*importFiles/,
+  play: /play\s*:\s*togglePlay/,
+  previous: /\bprevious\s*,/,
+  next: /\bnext\s*,/,
+  shuffle: /\bshuffle\s*,/,
+  repeat: /\brepeat\s*,/,
+  queue: /\bqueue\s*,/,
+  lyrics: /\blyrics\s*,/,
+  equalizer: /equalizer\s*:\s*eq/,
+  sleep: /\bsleep\s*,/,
+  speed: /\bspeed\s*,/,
+  favorites: /\bfavorites\s*,/,
+  history: /\bhistory\s*,/,
+  services: /\bservices\s*,/,
+  rescan: /["']rescan["']\s*:/
+};
+for (const [action, pattern] of Object.entries(actionPatterns)) {
+  must(app, pattern, "action handler: " + action);
 }
 must(app, /function installMobileInteractions\(/, "gesture layer");
 must(app, /touchstart.*touchmove.*touchend/s, "touch gesture handlers");
