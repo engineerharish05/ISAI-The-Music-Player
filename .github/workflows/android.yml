@@ -33,21 +33,24 @@ jobs:
         run: |
           node --check app.js
           node --check final.js
+          node --check online.js
 
       - name: Prepare web bundle
         run: |
           rm -rf www
           mkdir -p www/assets
-          cp index.html style.css app.js final.js manifest.webmanifest sw.js www/
+          cp index.html style.css app.js final.js online.js manifest.webmanifest sw.js www/
           cp assets/isai-logo.jpg www/assets/
 
       - name: Verify web bundle
         run: |
           test -f www/index.html
           test -f www/final.js
+          test -f www/online.js
           test -f www/manifest.webmanifest
           test -f www/sw.js
           grep -q 'final.js' www/index.html
+          grep -q 'online.js' www/index.html
 
       - name: Create Android project
         run: npx cap add android
