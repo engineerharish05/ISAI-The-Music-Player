@@ -20,14 +20,15 @@ class MusicRepository(private val resolver: ContentResolver) {
             MediaStore.Audio.Media.DURATION,
             MediaStore.Audio.Media.MIME_TYPE
         )
-        val selection = MediaStore.Audio.Media.IS_MUSIC + " != 0 AND " +
+        val selection = MediaStore.Audio.Media.MIME_TYPE + " LIKE ? AND " +
             MediaStore.Audio.Media.DURATION + " > 0"
+        val selectionArgs = arrayOf("audio/%")
 
         resolver.query(
             collection,
             projection,
             selection,
-            null,
+            selectionArgs,
             MediaStore.Audio.Media.TITLE + " COLLATE NOCASE ASC"
         )?.use { cursor ->
             val idCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
