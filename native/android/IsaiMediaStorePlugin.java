@@ -166,7 +166,7 @@ public class IsaiMediaStorePlugin extends Plugin {
                 int albumIdCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID);
                 int durationCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION);
                 int displayCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME);
-                int mimeCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.MIME_TYPE);
+                int mimeCol = cursor.getColumnIndex(MediaStore.Audio.Media.MIME_TYPE);
 
                 while (cursor.moveToNext()) {
                     long id = cursor.getLong(idCol);
