@@ -33,6 +33,14 @@ async function initNativeMusic(){
       return;
     }
 
+    try{
+      const permissions=await mediaStore.checkPermissions?.();
+      if(permissions?.audio && permissions.audio!=="granted"){
+        await mediaStore.requestPermissions?.();
+      }
+    }catch(permissionError){
+      console.warn("ISAI audio permission request failed:",permissionError);
+    }
     const result=await mediaStore.scan();
     const local=(result?.media||[]).map(m=>({
       id:"local-"+m.id,
@@ -110,7 +118,11 @@ const fmt=s=>Number.isFinite(s)?Math.floor(s/60)+":"+String(Math.floor(s%60)).pa
 const art=s=>s?(s.cover?'<div class="song-art"><img src="'+s.cover+'" alt=""></div>':'<div class="song-art" style="background:'+(s.color||"linear-gradient(145deg,#171713,#b48b32)")+'">♫</div>'):'<div class="song-art empty-art">♪</div>';
 const albumArt=s=>s?(s.cover?'<div class="album-art"><img src="'+s.cover+'" alt=""></div>':'<div class="album-art" style="background:'+(s.color||"linear-gradient(145deg,#171713,#b48b32)")+'">♫</div>'):'<div class="album-art empty-art">♪</div>';
 function msg(t){toast.textContent=t;toast.classList.add("show");clearTimeout(window.tt);window.tt=setTimeout(()=>toast.classList.remove("show"),1600)}
-function setPage(p){state.page=p;render()}
+function setPage(p){
+  state.page=p;
+  render();
+  requestAnimationFrame(()=>window.scrollTo({top:0,behavior:"instant"}));
+}
 function row(s){return '<div class="song" data-song="'+esc(String(s.id))+'">'+art(s)+'<div class="song-info"><b>'+esc(s.title)+'</b><span>'+esc(s.artist)+" · "+esc(s.album)+" · "+fmt(s.duration)+'</span></div><button class="heart '+(state.favorites.has(s.id)?"active":"")+'" data-fav="'+s.id+'">'+(state.favorites.has(s.id)?"♥":"♡")+'</button><button class="more" data-more="'+s.id+'">⋯</button></div>'}
 function render(){
   document.body.classList.toggle("dark",state.theme==="dark");
