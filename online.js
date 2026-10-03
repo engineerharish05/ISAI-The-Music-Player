@@ -24,6 +24,13 @@
     ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
 
   function save(){ localStorage.setItem(ONLINE_KEY, JSON.stringify(state)); }
+  function apiBase(){
+    const configured=window.ISAI_API_BASE;
+    if(configured) return String(configured).replace(/\\/$/,"");
+    return window.Capacitor?.isNativePlatform?.()
+      ? "https://isai-the-music-player.vercel.app/api"
+      : "/api";
+  }
   function toast(text){
     const el=document.querySelector("#toast");
     if(!el) return;
@@ -198,7 +205,7 @@
       wrap.innerHTML=`
         <div class="eyebrow">Online music</div>
         <div class="online-search">
-          <input id="isaiOnlineInput" placeholder="Search YouTube Music…" autocomplete="off">
+          <input id="isaiOnlineInput" placeholder="Search YouTube…" autocomplete="off">
           <button id="isaiOnlineButton">Search</button>
         </div>
         <div id="isaiOnlineResults" class="card list"><div class="empty">Search for an artist, song or album.</div></div>`;
