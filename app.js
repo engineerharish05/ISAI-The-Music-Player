@@ -27,37 +27,47 @@ async function initNativeMusic(){
       await nativeAudio.configure({backgroundPlayback:true,background:true,focus:true,showNotification:true});
       nativeAudio.addListener?.("complete",handleEnded);
     }
-    if(mediaStore){
-      const result=await mediaStore.scan();
-      const local=(result?.media||[]).map(m=>({
-        id:"local-"+m.id,
-        title:m.title||m.displayName||"Unknown track",
-        artist:m.artist&&m.artist!=="<unknown>"?m.artist:"Unknown artist",
-        album:m.album&&m.album!=="<unknown>"?m.album:"Unknown album",
-        genre:m.genre||"Local",
-        duration:Number(m.duration||0)/1000,
-        src:m.uri,
-        cover:"",
-        displayName:m.displayName||"track.mp3",
-        color:"linear-gradient(145deg,#171713,#b48b32)"
-      })).filter(s=>s.src);
-      if(local.length){
-        songs=local;
-        const validQueue=(state.queue||[]).filter(id=>local.some(s=>String(s.id)===String(id)));
-        state.queue=validQueue.length?validQueue:local.map(s=>s.id);
-        nativeLibraryReady=true;
-        save();
-        render();
-        msg(local.length+" local songs ready");
-      }else{
-        nativeLibraryReady=false;
-        msg("No local music found");
-      }
+    if(!mediaStore){
+      nativeLibraryReady=false;
+      msg("Android music bridge unavailable");
+      return;
+    }
+
+    const result=await mediaStore.scan();
+    const local=(result?.media||[]).map(m=>({
+      id:"local-"+m.id,
+      title:m.title||m.displayName||"Unknown track",
+      artist:m.artist&&m.artist!=="<unknown>"?m.artist:"Unknown artist",
+      album:m.album&&m.album!=="<unknown>"?m.album:"Unknown album",
+      genre:m.genre||"Local",
+      duration:Number(m.duration||0)/1000,
+      src:m.uri,
+      cover:"",
+      displayName:m.displayName||"track.mp3",
+      color:"linear-gradient(145deg,#171713,#b48b32)"
+    })).filter(s=>s.src);
+
+    songs=local;
+    const validQueue=(state.queue||[]).filter(id=>local.some(s=>String(s.id)===String(id)));
+    state.queue=validQueue.length?validQueue:local.map(s=>s.id);
+    nativeLibraryReady=local.length>0;
+    save();
+    render();
+
+    if(local.length){
+      msg(local.length+" local songs ready");
+    }else{
+      msg("No local music found. Add audio to Music or Downloads, then Rescan.");
     }
   }catch(error){
     nativeLibraryReady=false;
     console.warn("ISAI native music initialization failed:",error);
-    msg("Local music scan unavailable");
+    const message=String(error?.message||error||"");
+    if(/denied|permission/i.test(message)){
+      msg("Allow Music and audio access, then tap Rescan.");
+    }else{
+      msg("Local music scan failed. Tap Rescan to retry.");
+    }
   }
 }
 async function nativeLoad(s){
