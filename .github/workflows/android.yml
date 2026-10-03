@@ -35,6 +35,7 @@ jobs:
 
       - name: Validate JavaScript
         run: |
+          node --check backend.js
           node --check app.js
           node --check final.js
           node --check online.js
