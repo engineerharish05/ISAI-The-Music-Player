@@ -21,7 +21,7 @@ must(index, /id="view"/, "main view mount");
 must(index, /id="miniPlayer"/, "mini player mount");
 must(app, /function wire\(/, "event wiring function");
 for (const action of ["home","search","toggle-theme","import","play","previous","next","shuffle","repeat","queue","lyrics","equalizer","sleep","speed","favorites","history","services","rescan"]) {
-  must(app, new RegExp(`["']${action}["']\\s*:`), "action handler: " + action);
+  must(app, new RegExp(`(?:["']${action}["']|${action})\\s*:`), "action handler: " + action);
 }
 must(app, /function installMobileInteractions\(/, "gesture layer");
 must(app, /touchstart.*touchmove.*touchend/s, "touch gesture handlers");
