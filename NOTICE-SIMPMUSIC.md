@@ -1,26 +1,19 @@
 # ISAI — Third-Party and License Notice
 
-## ISAI source
+## Original ISAI code
 
-The native Android player, local music catalog, playback coordinator, queue model, and ISAI UI in this repository are original ISAI project code and are licensed under the **ISAI Custom Open Source License 1.0**.
+Original ISAI source code is released under the **Apache License 2.0**.
 
-See [LICENSE-ISAI.md](LICENSE-ISAI.md).
+Copyright © 2026 Rish Innovations / Harish P
 
-## Independent implementation
+See [LICENSE](LICENSE) for the full license text.
 
-ISAI may use public music-player applications as feature and UX references. The current native implementation does not intentionally copy SimpMusic source code.
+## ISAI branding
 
-The player uses Android MediaStore and AndroidX Media3/ExoPlayer APIs as technical dependencies. Those dependencies remain under their own licenses.
+The ISAI name, logo, icons, artwork, visual identity, and Rish Innovations marks are not granted as trademarks by the software license. This keeps the source code open while preventing redistribution from implying official endorsement.
 
-## Branding
+## Third-party dependencies
 
-The ISAI name, logo, visual identity, and original branding are not granted as trademarks by the ISAI software license.
+Third-party libraries, assets, and code remain subject to their own licenses and notices. The native Android implementation currently uses AndroidX, Jetpack Compose, Media3/ExoPlayer, and Coil dependencies under their respective licenses.
 
-## Free/open-source references used during the independent implementation
-
-The project was checked against permissively licensed music-player implementations for feature and architecture ideas. No GPL source was copied into the current native player.
-
-- Resonate — MIT License: https://github.com/kimhabkhun/resonate
-- Rhythm — MIT License: https://github.com/Aortax213/Music
-
-These repositories were used as public references for concepts such as Compose + Media3 playback, persistent library state, playlists, and player lifecycle. The ISAI native implementation remains independently written.
+The current native implementation is independently written and does not intentionally copy SimpMusic source code.
