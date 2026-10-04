@@ -206,8 +206,8 @@ private fun IsaiSettings(padding: PaddingValues) {
         Spacer(Modifier.height(18.dp))
         SettingsRow(Icons.Filled.Equalizer, "Equalizer", "Audio effects and presets")
         SettingsRow(Icons.Filled.Bedtime, "Sleep timer", "Stop playback automatically")
-        SettingsRow(Icons.Filled.Analytics, "Listening analytics", "Your listening history")
-        SettingsRow(Icons.Filled.Download, "Downloads", "Offline music")
+        SettingsRow(Icons.Filled.BarChart, "Listening analytics", "Your listening history")
+        SettingsRow(Icons.Filled.FileDownload, "Downloads", "Offline music")
         SettingsRow(Icons.Filled.Info, "About ISAI", "Open-source music player")
     }
 }
@@ -331,7 +331,7 @@ private fun IsaiNowPlaying(state: PlayerState, vm: IsaiViewModel, onDismiss: () 
                 }
                 Spacer(Modifier.height(18.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    PlayerTool(Icons.Filled.Lyrics, "Lyrics")
+                    PlayerTool(Icons.Filled.MusicNote, "Lyrics")
                     PlayerTool(Icons.Filled.Bedtime, "Sleep")
                     PlayerTool(Icons.Filled.Equalizer, "Effects")
                     PlayerTool(Icons.Filled.QueueMusic, "Queue")
@@ -395,7 +395,7 @@ private fun IsaiLogoMark() {
         modifier = Modifier.size(48.dp),
         shape = CircleShape,
         color = IsaiGold.copy(alpha = .10f),
-        border = ButtonDefaults.outlinedButtonBorder
+        border = androidx.compose.foundation.BorderStroke(1.dp, IsaiGold.copy(alpha = .35f))
     ) {
         Box(contentAlignment = Alignment.Center) {
             Text("இ", color = IsaiGoldSoft, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
