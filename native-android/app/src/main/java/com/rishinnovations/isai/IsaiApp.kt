@@ -356,7 +356,7 @@ private fun FullPlayer(state: PlayerState, vm: IsaiViewModel, onDismiss: () -> U
                             Text(song.title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                             Text(song.artist, color = Muted, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         }
-                        IconButton(onClick = { favorites.toggle(song.id) }) {
+                        IconButton(onClick = { vm.toggleFavorite(song.id) }) {
                             Icon(if (song.id in favorites) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder, "Favorite", tint = Gold)
                         }
                     }
