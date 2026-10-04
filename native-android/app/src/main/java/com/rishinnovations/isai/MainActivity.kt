@@ -16,16 +16,28 @@ class MainActivity : ComponentActivity() {
     private val permissionRefresh = mutableIntStateOf(0)
 
     private val permissionLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
-            val granted = result[Manifest.permission.READ_MEDIA_AUDIO] == true ||
-                result[Manifest.permission.READ_EXTERNAL_STORAGE] == true
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
+            val audioPermission = if (Build.VERSION.SDK_INT >= 33) {
+                ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.READ_MEDIA_AUDIO
+                ) == PackageManager.PERMISSION_GRANTED
+            } else {
+                ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.READ_EXTERNAL_STORAGE
+                ) == PackageManager.PERMISSION_GRANTED
+            }
 
             permissionRefresh.intValue++
 
             Toast.makeText(
                 this,
-                if (granted) "ISAI can access your music"
-                else "Allow Music and audio access in Settings to scan local music",
+                if (audioPermission) {
+                    "ISAI can access your music"
+                } else {
+                    "Allow Music and audio access in Settings to scan local music"
+                },
                 Toast.LENGTH_LONG
             ).show()
         }
