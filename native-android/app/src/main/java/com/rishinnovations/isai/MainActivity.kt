@@ -8,13 +8,18 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.core.content.ContextCompat
 
 class MainActivity : ComponentActivity() {
+    private val permissionRefresh = mutableIntStateOf(0)
+
     private val permissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
             val granted = result[Manifest.permission.READ_MEDIA_AUDIO] == true ||
                 result[Manifest.permission.READ_EXTERNAL_STORAGE] == true
+
+            permissionRefresh.intValue++
 
             Toast.makeText(
                 this,
@@ -53,7 +58,7 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            IsaiApp()
+            IsaiApp(permissionRefresh = permissionRefresh.intValue)
         }
     }
 }
