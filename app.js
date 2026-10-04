@@ -2,7 +2,7 @@ const seed=[];
 
 let saved={};
 try{saved=JSON.parse(localStorage.getItem("isai-state")||"{}")||{}}catch(error){console.warn("ISAI state reset:",error);localStorage.removeItem("isai-state")}
-const state={page:"home",playerOrigin:"home",theme:saved.theme||"dark",current:null,playing:false,shuffle:!!saved.shuffle,repeat:saved.repeat||"all",haptics:saved.haptics!==false,gestures:saved.gestures!==false,favorites:new Set(saved.favorites||[]),history:saved.history||[],queue:saved.queue||[],speed:saved.speed||1,volume:saved.volume??1,sleepUntil:saved.sleepUntil||0,onboarded:saved.onboarded===true,playlists:saved.playlists||{"Liked Songs":[]}};
+const state={page:"home",playerOrigin:"home",theme:saved.theme||"dark",current:null,playing:false,shuffle:!!saved.shuffle,repeat:saved.repeat||"all",haptics:saved.haptics!==false,gestures:saved.gestures!==false,favorites:new Set(saved.favorites||[]),history:saved.history||[],queue:saved.queue||[],speed:saved.speed||1,volume:saved.volume??1,sleepUntil:saved.sleepUntil||0,onboarded:true,playlists:saved.playlists||{"Liked Songs":[]}};
 let songs=[...seed],urls=[];
 const nativePlugins=window.Capacitor?.Plugins||{};
 const mediaStore=nativePlugins.IsaiMediaStore||null;
@@ -133,7 +133,6 @@ function render(){
     if(!window.__isaiBootTimer)window.__isaiBootTimer=setTimeout(()=>{state.booted=true;render()},900);
     return;
   }
-  if(!state.onboarded){onboarding();return}
   ({home,explore,library,downloads,playlists,settings}[state.page]||home)(); updateMini();
 }
 function onboarding(){
@@ -307,7 +306,7 @@ root.querySelectorAll("[data-playlist]").forEach(x=>x.onclick=()=>showPlaylist(x
 root.querySelectorAll("[data-more]").forEach(x=>x.onclick=e=>{e.stopPropagation();const s=songs.find(v=>String(v.id)===String(x.dataset.more));modal(s.title,'<div class="setting"><div><b>Play now</b><span>Start immediately</span></div><button class="more" data-play="'+s.id+'">▶</button></div><div class="setting"><div><b>Add to queue</b><span>Play after current queue</span></div><button class="more" data-add="'+s.id+'">＋</button></div>')});
 root.querySelectorAll("[data-play]").forEach(x=>x.onclick=()=>{document.querySelector(".modal")?.remove();openPlayer(x.dataset.play)});
 root.querySelectorAll("[data-add]").forEach(x=>x.onclick=()=>{state.queue.push(x.dataset.add);save();document.querySelector(".modal")?.remove();msg("Added to queue")});
-root.querySelectorAll("[data-action]").forEach(x=>{const a=x.dataset.action;const fn={home:()=>setPage("home"),search:()=>setPage("explore"),"toggle-theme":()=>{state.theme=state.theme==="dark"?"light":"dark";save();render()},import:importFiles,"open-player":()=>state.current&&player(),"player-back":()=>setPage(state.playerOrigin||"home"),play:togglePlay,previous,next,shuffle,repeat,queue,lyrics,equalizer:eq,sleep,speed,favorites,history,services,"rescan":()=>{haptic("LIGHT");initNativeMusic()},"new-playlist":newPlaylist,"shuffle-toggle":()=>{state.shuffle=!state.shuffle;save();haptic("LIGHT");render()},
+root.querySelectorAll("[data-action]").forEach(x=>{const a=x.dataset.action;const fn={home:()=>setPage("home"),search:()=>setPage("explore"),settings:()=>setPage("settings"),explore:()=>setPage("explore"),downloads:()=>setPage("downloads"),"online-search-focus":()=>document.querySelector("#search")?.focus(),"toggle-theme":()=>{state.theme=state.theme==="dark"?"light":"dark";save();render()},import:importFiles,"open-player":()=>state.current&&player(),"player-back":()=>setPage(state.playerOrigin||"home"),play:togglePlay,previous,next,shuffle,repeat,queue,lyrics,equalizer:eq,sleep,speed,favorites,history,services,"rescan":()=>{haptic("LIGHT");initNativeMusic()},"new-playlist":newPlaylist,"shuffle-toggle":()=>{state.shuffle=!state.shuffle;save();haptic("LIGHT");render()},
 "toggle-haptics":()=>{state.haptics=!state.haptics;save();if(state.haptics)haptic("LIGHT");render()},
 "toggle-gestures":()=>{state.gestures=!state.gestures;save();haptic("LIGHT");render()},
 close:()=>document.querySelector(".modal")?.remove()}[a];if(fn)x.onclick=fn});
