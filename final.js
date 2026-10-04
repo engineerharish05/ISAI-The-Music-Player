@@ -395,6 +395,7 @@
   };
 
   player = function(){
+    document.body.classList.remove("splash-mode","lyrics-mode");document.body.classList.add("player-mode");
     const s=state.current;
     if(!s) return;
     const current=audio.currentTime||0;
