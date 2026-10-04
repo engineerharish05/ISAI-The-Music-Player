@@ -142,8 +142,18 @@ class IsaiViewModel(app: Application) : AndroidViewModel(app) {
             }
         }
         if (index < 0 || player.currentMediaItemIndex == index) return
+
+        val updatedQueue = _player.value.queue.toMutableList().apply { removeAt(index) }
+        val currentIndex = player.currentMediaItemIndex
+        val updatedIndex = if (currentIndex > index) currentIndex - 1 else currentIndex
+        queuedSongs = updatedQueue
+        _player.value = _player.value.copy(
+            queue = updatedQueue,
+            queueIndex = updatedIndex,
+            currentSong = updatedQueue.getOrNull(updatedIndex)
+        )
+        persistQueue(updatedQueue, updatedIndex)
         player.removeMediaItem(index)
-        sync(player)
     }
 
     fun clearQueue() {
