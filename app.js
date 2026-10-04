@@ -2,7 +2,7 @@ const seed=[];
 
 let saved={};
 try{saved=JSON.parse(localStorage.getItem("isai-state")||"{}")||{}}catch(error){console.warn("ISAI state reset:",error);localStorage.removeItem("isai-state")}
-const state={page:"home",playerOrigin:"home",theme:saved.theme||"dark",current:null,playing:false,shuffle:!!saved.shuffle,repeat:saved.repeat||"all",haptics:saved.haptics!==false,gestures:saved.gestures!==false,favorites:new Set(saved.favorites||[]),history:saved.history||[],queue:saved.queue||[],speed:saved.speed||1,volume:saved.volume??1,sleepUntil:saved.sleepUntil||0,playlists:saved.playlists||{"Liked Songs":[]}};
+const state={page:"home",playerOrigin:"home",theme:saved.theme||"dark",current:null,playing:false,shuffle:!!saved.shuffle,repeat:saved.repeat||"all",haptics:saved.haptics!==false,gestures:saved.gestures!==false,favorites:new Set(saved.favorites||[]),history:saved.history||[],queue:saved.queue||[],speed:saved.speed||1,volume:saved.volume??1,sleepUntil:saved.sleepUntil||0,onboarded:saved.onboarded===true,playlists:saved.playlists||{"Liked Songs":[]}};
 let songs=[...seed],urls=[];
 const nativePlugins=window.Capacitor?.Plugins||{};
 const mediaStore=nativePlugins.IsaiMediaStore||null;
@@ -44,9 +44,9 @@ async function initNativeMusic(){
     const result=await mediaStore.scan();
     const local=(result?.media||[]).map(m=>({
       id:"local-"+m.id,
-      title:m.title||m.displayName||"Unknown track",
-      artist:m.artist&&m.artist!=="<unknown>"?m.artist:"Unknown artist",
-      album:m.album&&m.album!=="<unknown>"?m.album:"Unknown album",
+      title:m.title&&m.title!=="<unknown>"?m.title:(m.displayName||"Unknown track"),
+      artist:m.artist&&m.artist!=="<unknown>"?m.artist:"Local artist",
+      album:m.album&&m.album!=="<unknown>"?m.album:"Local music",
       genre:m.genre||"Local",
       duration:Number(m.duration||0)/1000,
       src:m.uri,
@@ -126,49 +126,48 @@ function setPage(p){
 function row(s){return '<div class="song" data-song="'+esc(String(s.id))+'">'+art(s)+'<div class="song-info"><b>'+esc(s.title)+'</b><span>'+esc(s.artist)+" · "+esc(s.album)+" · "+fmt(s.duration)+'</span></div><button class="heart '+(state.favorites.has(s.id)?"active":"")+'" data-fav="'+s.id+'">'+(state.favorites.has(s.id)?"♥":"♡")+'</button><button class="more" data-more="'+s.id+'">⋯</button></div>'}
 function render(){
   document.body.classList.toggle("dark",state.theme==="dark");
-  const themeMeta=document.querySelector('meta[name="theme-color"]');
-  if(themeMeta)themeMeta.content=state.theme==="dark"?"#090909":"#f4f1e8";document.querySelectorAll(".nav").forEach(n=>n.classList.toggle("active",n.dataset.page===state.page));({home,explore,library,playlists,settings}[state.page]||home)();updateMini()}
+  const themeMeta=document.querySelector('meta[name="theme-color"]'); if(themeMeta)themeMeta.content="#080807";
+  document.querySelectorAll(".nav").forEach(n=>n.classList.toggle("active",n.dataset.page===state.page));
+  if(!state.booted){
+    view.innerHTML='<section class="splash-screen"><div class="splash-glow"></div><img class="splash-logo" src="assets/isai-logo.jpg" alt="ISAI"><div class="splash-wordmark">ISAI</div><div class="splash-tag">MUSIC BEYOND LIMITS</div></section>';
+    if(!window.__isaiBootTimer)window.__isaiBootTimer=setTimeout(()=>{state.booted=true;render()},900);
+    return;
+  }
+  if(!state.onboarded){onboarding();return}
+  ({home,explore,library,downloads,playlists,settings}[state.page]||home)(); updateMini();
+}
+function onboarding(){
+  view.innerHTML='<section class="onboarding"><div class="onboard-art"><div class="orb orb-a"></div><div class="orb orb-b"></div><div class="onboard-symbol">♫</div></div><div class="onboard-copy"><div class="eyebrow">WELCOME TO ISAI</div><h1>Music without<br>boundaries.</h1><p>Search, stream, discover and enjoy your music in one refined listening experience.</p></div><div class="onboard-dots"><i class="active"></i><i></i><i></i><i></i></div><button class="onboard-next" data-action="finish-onboarding">→</button><button class="onboard-skip" data-action="finish-onboarding">Skip</button></section>'; wire();
+}
+function featureCard(title,sub,cls,page){return '<button class="feature-card '+cls+'" data-page="'+page+'"><span>'+esc(sub)+'</span><b>'+esc(title)+'</b><i>↗</i></button>}
 function home(){
-const recent=state.history.map(id=>songs.find(s=>s.id===id)).filter(Boolean).slice(0,6);
-const albums=[...new Map(songs.map(s=>[s.album,s])).values()];
-view.innerHTML='<section class="hero card"><div class="eyebrow">ISAI - The Music Experience</div><h1>Your Day,<br><span class="hero-line">Your Moments,</span><br>Your Isai</h1><p>'+(songs.length?'A Refined Music Experience Designed Around The Songs You Love.':'Your library is ready. Add your own music to start listening.')+'</p><div class="hero-actions">'+(songs.length?'<button class="pill primary" data-song="'+songs[0].id+'">▶ Listen now</button>':'<button class="pill primary" data-action="import">＋ Add music</button>')+'<button class="pill ghost" data-action="import">＋ Import audio</button></div></section>'+
-'<section class="section"><div class="row"><h2>Quick access</h2><button class="more" data-page="library">See all</button></div><div class="quick"><button class="card quick-card" data-page="library"><strong>'+songs.length+'</strong><span>Songs</span></button><button class="card quick-card" data-action="favorites"><strong>♥ '+state.favorites.size+'</strong><span>Liked songs</span></button><button class="card quick-card" data-page="playlists"><strong>'+Object.keys(state.playlists).length+'</strong><span>Playlists</span></button><button class="card quick-card" data-action="history"><strong>◷ '+state.history.length+'</strong><span>History</span></button></div></section>'+
-'<section class="section"><div class="row"><h2>Albums & collections</h2></div>'+(albums.length?'<div class="shelf">'+albums.map(s=>'<button class="album-card" data-song="'+s.id+'">'+albumArt(s)+'<b>'+esc(s.album)+'</b><span>'+esc(s.artist)+'</span></button>').join("")+'</div>':'<div class="card empty">Your albums will appear here after you import music.</div>')+'</section>'+
-'<section class="section"><div class="row"><h2>'+(recent.length?"Continue listening":"Recently added")+'</h2></div>'+(songs.length?'<div class="card list">'+(recent.length?recent:songs).slice(0,6).map(row).join("")+'</div>':'<div class="card empty">No music in your library yet.</div>')+'</section>'+
-'<section class="section card banner"><b><span class="dot"></span>ISAI local-first mode</b><p>Import your own audio and use the player, queue, favorites, playlists, theme and playback controls without an account.</p></section>';
-wire()
+  const recent=state.history.map(id=>songs.find(s=>String(s.id)===String(id))).filter(Boolean).slice(0,8), base=(recent.length?recent:songs).slice(0,8);
+  const albums=[...new Map(songs.map(s=>[s.album,s])).values()].filter(s=>s.album&&s.album!=="Unknown album").slice(0,8), first=songs[0];
+  view.innerHTML='<div class="home-header"><div><div class="eyebrow">ISAI · THE MUSIC EXPERIENCE</div><h1>Your music.<br><span>Beautifully yours.</span></h1></div><button class="profile-orb" data-action="settings"><img src="assets/isai-logo.jpg" alt="ISAI"></button></div>'+
+  '<div class="home-chips"><button class="chip active">All</button><button class="chip">Songs</button><button class="chip">Playlists</button><button class="chip">Albums</button><button class="chip">Artists</button></div>'+
+  '<section class="feature-hero"><div class="feature-copy"><div class="eyebrow">YOUR MUSIC</div><h2>Feel the music<br>your way.</h2><p>'+esc(songs.length?songs.length+" songs ready to play":"Your library is ready for your music.")+'</p><div class="hero-actions">'+(first?'<button class="pill primary" data-song="'+esc(String(first.id))+'">▶ Play now</button>':'<button class="pill primary" data-action="import">＋ Add music</button>')+'<button class="pill ghost" data-page="explore">Discover</button></div></div><div class="feature-art"><div class="feature-sun"></div><div class="feature-wave"></div></div></section>'+
+  '<section class="section"><div class="row"><h2>Discover</h2><button class="more" data-page="explore">See all</button></div><div class="feature-grid">'+featureCard("Top Charts","TRENDING","feature-red","explore")+featureCard("AI Mix","PERSONALIZED","feature-purple","explore")+featureCard("New Releases","FRESH","feature-blue","explore")+featureCard("Mood Mix","CURATED","feature-amber","playlists")+'</div></section>'+
+  '<section class="section"><div class="row"><h2>For you</h2><button class="more" data-page="playlists">See all</button></div><div class="playlist-shelf"><button class="mood-card mood-1" data-page="playlists"><span>Chill Tamil</span><small>ISAI playlist</small></button><button class="mood-card mood-2" data-page="playlists"><span>Focus</span><small>Deep listening</small></button><button class="mood-card mood-3" data-page="playlists"><span>Workout</span><small>Energy</small></button><button class="mood-card mood-4" data-page="playlists"><span>Lo-Fi</span><small>Relax</small></button></div></section>'+
+  '<section class="section"><div class="row"><h2>Recently played</h2><button class="more" data-page="library">View library</button></div>'+(base.length?'<div class="target-list">'+base.map(row).join("")+'</div>':'<div class="empty card">Scan your device music to start building ISAI.</div>')+'</section>'+
+  '<section class="section"><div class="row"><h2>Albums</h2></div>'+(albums.length?'<div class="album-shelf">'+albums.map(s=>'<button class="album-card target-album" data-song="'+esc(String(s.id))+'">'+albumArt(s)+'<b>'+esc(s.album)+'</b><span>'+esc(s.artist)+'</span></button>').join("")+'</div>':'<div class="empty card">Album artwork and metadata will appear here when available.</div>')+'</section>'; wire();
 }
 function explore(){
-view.innerHTML='<div class="eyebrow">Explore</div><h1>Find your sound.</h1>'+
-'<input id="search" class="search" placeholder="Songs, artists, albums…" autocomplete="off">'+
-'<section class="section"><div class="chips">'+["All",...new Set(songs.map(s=>s.genre))].map((g,i)=>'<button class="chip '+(i===0?"active":"")+'" data-genre="'+esc(g)+'">'+esc(g)+'</button>').join("")+'</div></section>'+
-'<section id="onlineMount" class="online-section"></section>'+
-'<section class="section explore-local"><div class="row"><div><div class="eyebrow">Your library</div><h2>All music</h2></div><button class="more" data-action="shuffle" aria-label="Shuffle all music">⤨</button></div>'+
-'<div id="results" class="card list">'+songs.map(row).join("")+'</div></section>';
-wire()
+  view.innerHTML='<div class="search-header"><button class="back-circle" data-page="home">‹</button><div><div class="eyebrow">SEARCH</div><h1>Find your sound.</h1></div></div><div class="online-search target-search"><span>⌕</span><input id="search" placeholder="Search YouTube music…" autocomplete="off"><button data-action="online-search-focus">→</button></div><div class="home-chips"><button class="chip active">All</button><button class="chip">Songs</button><button class="chip">Playlists</button><button class="chip">Albums</button><button class="chip">Artists</button></div><section id="onlineMount" class="online-section"></section><section class="section"><div class="row"><h2>Recommended for you</h2></div>'+(songs.length?'<div class="target-list">'+songs.slice(0,8).map(row).join("")+'</div>':'<div class="empty card">Search online or scan local music.</div>')+'</section>'; wire();
 }
 function library(){
-view.innerHTML='<div class="eyebrow">Library</div><h1>Your collection.</h1><div class="chips"><button class="chip active">All</button><button class="chip" data-action="favorites">Liked</button><button class="chip" data-action="history">History</button><button class="chip" data-action="import">Import</button></div><section class="section"><div class="row"><h2>'+songs.length+' songs</h2><button class="more" data-action="shuffle">⤨</button></div><div class="card list">'+songs.map(row).join("")+'</div></section>';
-wire()
+  const albums=[...new Map(songs.map(s=>[s.album,s])).values()].filter(s=>s.album&&s.album!=="Unknown album").slice(0,10);
+  view.innerHTML='<div class="page-heading"><div><div class="eyebrow">YOUR LIBRARY</div><h1>Everything you love.</h1></div><button class="round" data-action="import">＋</button></div><div class="home-chips"><button class="chip active">Songs</button><button class="chip" data-action="favorites">Liked</button><button class="chip" data-action="history">History</button><button class="chip" data-action="import">Import</button></div><section class="library-summary"><div><strong>'+songs.length+'</strong><span>songs on this device</span></div><button class="pill primary" data-action="shuffle">⤨ Shuffle</button></section><section class="section"><div class="row"><h2>Albums</h2></div>'+(albums.length?'<div class="album-shelf">'+albums.map(s=>'<button class="album-card target-album" data-song="'+esc(String(s.id))+'">'+albumArt(s)+'<b>'+esc(s.album)+'</b><span>'+esc(s.artist)+'</span></button>').join("")+'</div>':'<div class="empty card">No albums yet.</div>')+'</section><section class="section"><div class="row"><h2>All songs</h2></div><div class="target-list">'+(songs.length?songs.map(row).join(""):'<div class="empty">No local music found.</div>')+'</div></section>'; wire();
+}
+function downloads(){
+  view.innerHTML='<div class="page-heading"><div><div class="eyebrow">OFFLINE</div><h1>Downloads.</h1></div><button class="round" data-action="rescan">↻</button></div><div class="download-total"><strong>'+songs.length+'</strong><span>songs available offline</span><small>Local device music is always available without an account.</small></div><div class="home-chips"><button class="chip active">Songs</button><button class="chip">Playlists</button><button class="chip">Albums</button></div><section class="section"><div class="row"><h2>On this device</h2><span class="muted">'+songs.length+' tracks</span></div>'+(songs.length?'<div class="target-list">'+songs.map(row).join("")+'</div>':'<div class="empty card">Nothing is available offline yet.</div>')+'</section>'; wire();
 }
 function playlists(){
-view.innerHTML='<div class="eyebrow">Playlists</div><h1>Made for you.</h1><div class="quick"><button class="card quick-card" data-action="new-playlist"><strong>＋</strong><span>Create playlist</span></button><button class="card quick-card" data-action="favorites"><strong>♥</strong><span>Liked songs</span></button></div><section class="section"><h2>Your playlists</h2><div class="card list">'+Object.keys(state.playlists).map(n=>'<button class="song" data-playlist="'+esc(n)+'">'+art(songs.find(s=>s.id===state.playlists[n][0])||songs[0])+'<div class="song-info"><b>'+esc(n)+'</b><span>'+state.playlists[n].length+' songs</span></div><span class="more">›</span></button>').join("")+'</div></section>';
-wire()
+  const names=Object.keys(state.playlists);
+  view.innerHTML='<div class="page-heading"><div><div class="eyebrow">YOUR COLLECTION</div><h1>Curate your sound.</h1></div><button class="round" data-action="new-playlist">＋</button></div><div class="playlist-create" data-action="new-playlist"><span>＋</span><div><b>Create a playlist</b><small>Build a collection from your library.</small></div></div><section class="section"><div class="row"><h2>Your playlists</h2></div><div class="playlist-list">'+names.map((n,i)=>'<button class="playlist-row" data-playlist="'+esc(n)+'"><span class="playlist-cover pc-'+(i%4+1)+'">♫</span><div><b>'+esc(n)+'</b><small>'+state.playlists[n].length+' songs</small></div><span class="more">›</span></button>').join("")+'</div></section>'; wire();
 }
 function settings(){
-view.innerHTML='<div class="eyebrow">Settings</div><h1>Make ISAI yours.</h1>'+
-'<div class="card" style="padding:4px 18px">'+
-'<div class="setting"><div><b>Dark theme</b><span>ISAI night appearance</span></div><button class="switch '+(state.theme==="dark"?"on":"")+'" data-action="toggle-theme"><div class="knob"></div></button></div>'+
-'<div class="setting"><div><b>Shuffle</b><span>Randomize next tracks</span></div><button class="switch '+(state.shuffle?"on":"")+'" data-action="shuffle-toggle" aria-label="Toggle shuffle"><div class="knob"></div></button></div>'+
-'<div class="setting"><div><b>Haptics</b><span>Subtle touch feedback</span></div><button class="switch '+(state.haptics?"on":"")+'" data-action="toggle-haptics" aria-label="Toggle haptics"><div class="knob"></div></button></div>'+
-'<div class="setting"><div><b>Gestures</b><span>Swipe and long-press controls</span></div><button class="switch '+(state.gestures?"on":"")+'" data-action="toggle-gestures" aria-label="Toggle gestures"><div class="knob"></div></button></div>'+
-'<div class="setting"><div><b>Equalizer</b><span>10-band player controls</span></div><button class="more" data-action="equalizer">›</button></div>'+
-'<div class="setting"><div><b>Sleep timer</b><span>Stop playback automatically</span></div><button class="more" data-action="sleep">›</button></div>'+
-'<div class="setting"><div><b>Playback speed</b><span>'+state.speed+'×</span></div><button class="more" data-action="speed">›</button></div>'+
-'<div class="setting"><div><b>Queue</b><span>'+state.queue.length+' tracks</span></div><button class="more" data-action="queue">›</button></div><div class="setting"><div><b>Rescan device music</b><span>Refresh songs from Android storage</span></div><button class="more" data-action="rescan">↻</button></div><div class="setting"><div><b>Connected services</b><span>Spotify and YouTube</span></div><button class="more" data-action="services">›</button></div>'+
-'</div>'+
-'<section class="section card banner"><b>ISAI — The Music Player</b><p>Premium dark/gold visual system, your ISAI emblem and a mobile-first music-player interaction model.</p></section>';
-wire()
+  const rows=[["YouTube Integration","Search, account and online playback","services","▶"],["Playback","Queue, gestures and playback behaviour","queue","›"],["Audio & Equalizer","Sound controls and presets","equalizer","›"],["Downloads & Storage","Offline music and storage","downloads","›"],["Lyrics","Synced lyrics and display","lyrics","›"],["Sleep Timer","Stop playback automatically","sleep","›"],["Android Auto","Car playback integration","services","›"],["Home Widgets","Quick access from your launcher","services","›"],["Listening Analytics","Your listening history","history","›"],["AI Recommendations","Personalized discovery","explore","›"],["Appearance","Theme and ISAI visual system","toggle-theme","›"],["Data & Privacy","Local-first storage and controls","services","›"]];
+  view.innerHTML='<div class="page-heading"><div><div class="eyebrow">ISAI</div><h1>Settings.</h1></div></div><div class="settings-card">'+rows.map(r=>'<button class="settings-row" data-action="'+r[2]+'"><span class="settings-icon">'+r[3]+'</span><span class="settings-copy"><b>'+esc(r[0])+'</b><small>'+esc(r[1])+'</small></span><span class="settings-arrow">›</span></button>').join("")+'</div><div class="about-card"><img src="assets/isai-logo.jpg" alt=""><div><b>ISAI — The Music Player</b><small>Music beyond limits · open source</small></div></div>'; wire();
 }
 function openPlayer(id){const s=songs.find(x=>String(x.id)===String(id));if(!s)return;haptic("LIGHT");state.playerOrigin=state.page;state.current=s;state.playing=true;state.history=[id,...state.history.filter(x=>x!==id)].slice(0,30);if(!state.queue.length)state.queue=songs.map(x=>x.id);save();load(s);player();updateMini()}
 async function load(s){
