@@ -93,7 +93,6 @@ fun IsaiApp(permissionRefresh: Int = 0, vm: IsaiViewModel = viewModel()) {
 }
 
 @Composable
-@Composable
 private fun NavigationItem(
     index: Int,
     selectedIndex: Int,
