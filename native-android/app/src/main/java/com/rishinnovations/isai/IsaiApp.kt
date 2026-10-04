@@ -30,7 +30,7 @@ private val Surface = Color(0xFF171714)
 private val Surface2 = Color(0xFF22221D)
 
 @Composable
-fun IsaiApp(vm: IsaiViewModel = viewModel()) {
+fun IsaiApp(permissionRefresh: Int = 0, vm: IsaiViewModel = viewModel()) {
     val songs by vm.songs.collectAsState()
     val player by vm.playerState.collectAsState()
     var tab by rememberSaveable { mutableIntStateOf(0) }
@@ -38,7 +38,7 @@ fun IsaiApp(vm: IsaiViewModel = viewModel()) {
     var showPlayer by rememberSaveable { mutableStateOf(false) }
     val favorites = remember { mutableStateListOf<Long>() }
 
-    LaunchedEffect(Unit) { vm.connect(); vm.scan() }
+    LaunchedEffect(permissionRefresh) { vm.connect(); vm.scan() }
 
     val filtered = remember(songs, search) {
         if (search.isBlank()) songs else songs.filter {
@@ -109,6 +109,7 @@ private fun Home(songs: List<Song>, player: PlayerState, vm: IsaiViewModel, favo
                             Icon(Icons.Filled.PlayArrow, null); Spacer(Modifier.width(6.dp)); Text("Play all")
                         }
                         OutlinedButton(enabled = player.currentSong != null, onClick = openPlayer) { Text("Now playing") }
+                        OutlinedButton(onClick = vm::scan) { Icon(Icons.Filled.Refresh, null); Spacer(Modifier.width(6.dp)); Text("Scan") }
                     }
                 }
             }
