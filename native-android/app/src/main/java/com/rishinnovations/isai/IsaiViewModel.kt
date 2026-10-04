@@ -134,8 +134,12 @@ class IsaiViewModel(app: Application) : AndroidViewModel(app) {
 
     fun removeFromQueue(songId: Long) {
         val player = controller ?: return
-        val index = player.currentTimeline.indexOfFirst { window ->
-            player.getMediaItemAt(window.windowIndex).mediaId == songId.toString()
+        var index = -1
+        for (candidate in 0 until player.mediaItemCount) {
+            if (player.getMediaItemAt(candidate).mediaId == songId.toString()) {
+                index = candidate
+                break
+            }
         }
         if (index < 0 || player.currentMediaItemIndex == index) return
         player.removeMediaItem(index)
