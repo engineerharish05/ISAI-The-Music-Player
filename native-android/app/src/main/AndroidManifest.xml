@@ -9,7 +9,7 @@
     <application
         android:theme="@style/Theme.ISAI"
         android:label="ISAI"
-        android:icon="@drawable/ic_isai"
+        android:icon="@mipmap/ic_launcher"
         android:allowBackup="true">
         <activity
             android:name=".MainActivity"
