@@ -40,7 +40,7 @@ fun IsaiApp(permissionRefresh: Int = 0, vm: IsaiViewModel = viewModel()) {
     var tab by rememberSaveable { mutableIntStateOf(0) }
     var search by rememberSaveable { mutableStateOf("") }
     var showPlayer by rememberSaveable { mutableStateOf(false) }
-    val favorites = remember { mutableStateListOf<Long>() }
+    val favorites by vm.favorites.collectAsState()
 
     LaunchedEffect(permissionRefresh) {
         vm.connect()
@@ -83,7 +83,7 @@ fun IsaiApp(permissionRefresh: Int = 0, vm: IsaiViewModel = viewModel()) {
                 0 -> Home(songs, player, vm, favorites, padding, { showPlayer = true }, { tab = 2 })
                 1 -> SearchPage(filtered, search, { search = it }, vm, favorites, padding)
                 2 -> Library(songs, vm, favorites, padding)
-                else -> QueuePage(player, vm, padding)
+                else -> QueuePage(player, vm, favorites, padding)
             }
         }
 
@@ -114,7 +114,7 @@ private fun Home(
     songs: List<Song>,
     player: PlayerState,
     vm: IsaiViewModel,
-    favorites: MutableList<Long>,
+    favorites: Set<Long>,
     padding: PaddingValues,
     openPlayer: () -> Unit,
     openLibrary: () -> Unit
@@ -184,7 +184,7 @@ private fun Home(
             item { EmptyState("Allow music access, then tap Scan.") }
         } else {
             items(songs.take(12), key = { it.id }) { song ->
-                SongRow(song, song.id in favorites, { favorites.toggle(song.id) }, { vm.play(song) })
+                SongRow(song, song.id in favorites, { vm.toggleFavorite(song.id) }, { vm.play(song) })
             }
         }
         player.currentSong?.let { current ->
@@ -213,7 +213,7 @@ private fun Home(
 @Composable
 private fun SearchPage(
     songs: List<Song>, search: String, onSearch: (String) -> Unit,
-    vm: IsaiViewModel, favorites: MutableList<Long>, padding: PaddingValues
+    vm: IsaiViewModel, favorites: Set<Long>, padding: PaddingValues
 ) {
     Column(Modifier.fillMaxSize().padding(padding).padding(horizontal = 20.dp, vertical = 22.dp)) {
         Text("Search", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
@@ -238,7 +238,7 @@ private fun SearchPage(
                 contentPadding = PaddingValues(bottom = 24.dp)
             ) {
                 items(songs, key = { it.id }) { song ->
-                    SongRow(song, song.id in favorites, { favorites.toggle(song.id) }, { vm.play(song) })
+                    SongRow(song, song.id in favorites, { vm.toggleFavorite(song.id) }, { vm.play(song) })
                 }
             }
         }
@@ -246,7 +246,7 @@ private fun SearchPage(
 }
 
 @Composable
-private fun Library(songs: List<Song>, vm: IsaiViewModel, favorites: MutableList<Long>, padding: PaddingValues) {
+private fun Library(songs: List<Song>, vm: IsaiViewModel, favorites: Set<Long>, padding: PaddingValues) {
     Column(Modifier.fillMaxSize().padding(padding).padding(horizontal = 20.dp, vertical = 22.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
@@ -261,7 +261,7 @@ private fun Library(songs: List<Song>, vm: IsaiViewModel, favorites: MutableList
         } else {
             LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(bottom = 24.dp)) {
                 items(songs, key = { it.id }) { song ->
-                    SongRow(song, song.id in favorites, { favorites.toggle(song.id) }, { vm.play(song) })
+                    SongRow(song, song.id in favorites, { vm.toggleFavorite(song.id) }, { vm.play(song) })
                 }
             }
         }
@@ -269,7 +269,7 @@ private fun Library(songs: List<Song>, vm: IsaiViewModel, favorites: MutableList
 }
 
 @Composable
-private fun QueuePage(player: PlayerState, vm: IsaiViewModel, padding: PaddingValues) {
+private fun QueuePage(player: PlayerState, vm: IsaiViewModel, favorites: Set<Long>, padding: PaddingValues) {
     Column(Modifier.fillMaxSize().padding(padding).padding(horizontal = 20.dp, vertical = 22.dp)) {
         Text("Queue", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
         Text(
@@ -283,7 +283,7 @@ private fun QueuePage(player: PlayerState, vm: IsaiViewModel, padding: PaddingVa
         } else {
             LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(bottom = 24.dp)) {
                 items(player.queue, key = { it.id }) { song ->
-                    SongRow(song, player.currentSong?.id == song.id, {}, { vm.play(song) })
+                    SongRow(song, song.id in favorites, { vm.toggleFavorite(song.id) }, { vm.play(song) }, active = player.currentSong?.id == song.id)
                 }
             }
         }
@@ -332,7 +332,7 @@ private fun MiniPlayer(
 }
 
 @Composable
-private fun FullPlayer(state: PlayerState, vm: IsaiViewModel, onDismiss: () -> Unit, favorites: MutableList<Long>) {
+private fun FullPlayer(state: PlayerState, vm: IsaiViewModel, onDismiss: () -> Unit, favorites: Set<Long>) {
     val song = state.currentSong ?: return
     Dialog(onDismissRequest = onDismiss) {
         Surface(Modifier.fillMaxSize(), color = Black) {
@@ -386,7 +386,7 @@ private fun FullPlayer(state: PlayerState, vm: IsaiViewModel, onDismiss: () -> U
                     Spacer(Modifier.height(6.dp))
                     LazyColumn(Modifier.fillMaxWidth().weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp), contentPadding = PaddingValues(bottom = 12.dp)) {
                         items(state.queue, key = { it.id }) { item ->
-                            SongRow(item, item.id == song.id, {}, { vm.play(item) })
+                            SongRow(item, item.id in favorites, { vm.toggleFavorite(item.id) }, { vm.play(item) }, active = item.id == song.id)
                         }
                     }
                 }
@@ -402,9 +402,6 @@ private fun EmptyState(text: String) {
     }
 }
 
-private fun MutableList<Long>.toggle(id: Long) {
-    if (contains(id)) remove(id) else add(id)
-}
 
 private fun formatTime(ms: Long): String {
     val total = (ms / 1000L).coerceAtLeast(0L)
