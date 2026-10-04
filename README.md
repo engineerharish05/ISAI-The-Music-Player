@@ -36,10 +36,12 @@ The native implementation will be extended directly for local playback, playlist
 
 ## Licensing
 
-Original ISAI code is intended to use the custom **ISAI Custom Open Source License 1.0**. See [LICENSE-ISAI.md](LICENSE-ISAI.md) and [NOTICE-SIMPMUSIC.md](NOTICE-SIMPMUSIC.md).
+Original ISAI source code is released under the standard **Apache License 2.0**. This recognized open-source license permits use, modification, redistribution, and commercial use subject to its terms.
 
-> The custom ISAI license does not override third-party licenses.
+ISAI branding is separate from the software license. The ISAI name, logo, artwork, and other marks are not granted as trademarks.
+
+See [LICENSE](LICENSE) and [NOTICE-SIMPMUSIC.md](NOTICE-SIMPMUSIC.md) for details. Third-party dependencies remain under their own licenses.
 
 ## Project
 
-Private repository: engineerharish05/ISAI-The-Music-Player
+Repository: engineerharish05/ISAI-The-Music-Player
