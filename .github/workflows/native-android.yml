@@ -1,5 +1,7 @@
 name: ISAI Native — Build & Verify
 
+# Native-only verification pipeline.
+
 on:
   workflow_dispatch:
   push:
