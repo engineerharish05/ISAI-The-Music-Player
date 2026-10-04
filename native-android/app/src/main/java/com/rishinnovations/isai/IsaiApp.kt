@@ -259,20 +259,37 @@ private fun SearchPage(
 
 @Composable
 private fun Library(songs: List<Song>, vm: IsaiViewModel, favorites: Set<Long>, padding: PaddingValues) {
+    var favoritesOnly by rememberSaveable { mutableStateOf(false) }
+    val visibleSongs = if (favoritesOnly) songs.filter { it.id in favorites } else songs
+
     Column(Modifier.fillMaxSize().padding(padding).padding(horizontal = 20.dp, vertical = 22.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text("Library", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
-                Text("${songs.size} songs", color = Gold, fontWeight = FontWeight.SemiBold)
+                Text("${visibleSongs.size} songs", color = Gold, fontWeight = FontWeight.SemiBold)
             }
             IconButton(onClick = vm::scan) { Icon(Icons.Filled.Refresh, "Scan library") }
         }
         Spacer(Modifier.height(12.dp))
-        if (songs.isEmpty()) {
-            EmptyState("No local songs found. Tap refresh to scan again.")
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedButton(onClick = { favoritesOnly = false }, shape = RoundedCornerShape(14.dp)) {
+                Text("All")
+            }
+            OutlinedButton(onClick = { favoritesOnly = true }, shape = RoundedCornerShape(14.dp)) {
+                Icon(Icons.Filled.Favorite, null, tint = if (favoritesOnly) Gold else LocalContentColor.current)
+                Spacer(Modifier.width(6.dp))
+                Text("Favorites")
+            }
+        }
+        Spacer(Modifier.height(12.dp))
+        if (visibleSongs.isEmpty()) {
+            EmptyState(
+                if (favoritesOnly) "No favorite songs yet. Tap the heart on a song to save it."
+                else "No local songs found. Tap refresh to scan again."
+            )
         } else {
             LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(bottom = 24.dp)) {
-                items(songs, key = { it.id }) { song ->
+                items(visibleSongs, key = { it.id }) { song ->
                     SongRow(song, song.id in favorites, { vm.toggleFavorite(song.id) }, { vm.play(song) })
                 }
             }
@@ -284,18 +301,31 @@ private fun Library(songs: List<Song>, vm: IsaiViewModel, favorites: Set<Long>, 
 private fun QueuePage(player: PlayerState, vm: IsaiViewModel, favorites: Set<Long>, padding: PaddingValues) {
     Column(Modifier.fillMaxSize().padding(padding).padding(horizontal = 20.dp, vertical = 22.dp)) {
         Text("Queue", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
-        Text(
-            if (player.queue.isEmpty()) "Nothing is queued."
-            else "${player.queue.size} tracks · ${player.queueIndex + 1} current",
-            color = Muted
-        )
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                if (player.queue.isEmpty()) "Nothing is queued."
+                else "${player.queue.size} tracks · ${player.queueIndex + 1} current",
+                color = Muted,
+                modifier = Modifier.weight(1f)
+            )
+            if (player.queue.isNotEmpty()) {
+                TextButton(onClick = vm::clearQueue) { Text("Clear") }
+            }
+        }
         Spacer(Modifier.height(16.dp))
         if (player.queue.isEmpty()) {
             EmptyState("Play a song or choose Play all to build the queue.")
         } else {
             LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(bottom = 24.dp)) {
                 items(player.queue, key = { it.id }) { song ->
-                    SongRow(song, song.id in favorites, { vm.toggleFavorite(song.id) }, { vm.play(song) }, active = player.currentSong?.id == song.id)
+                    SongRow(
+                        song,
+                        song.id in favorites,
+                        { vm.toggleFavorite(song.id) },
+                        { vm.play(song) },
+                        active = player.currentSong?.id == song.id,
+                        onRemove = if (song.id == player.currentSong?.id) null else ({ vm.removeFromQueue(song.id) })
+                    )
                 }
             }
         }
@@ -304,7 +334,12 @@ private fun QueuePage(player: PlayerState, vm: IsaiViewModel, favorites: Set<Lon
 
 @Composable
 private fun SongRow(
-    song: Song, favorite: Boolean, onFavorite: () -> Unit, onClick: () -> Unit, active: Boolean = false
+    song: Song,
+    favorite: Boolean,
+    onFavorite: () -> Unit,
+    onClick: () -> Unit,
+    active: Boolean = false,
+    onRemove: (() -> Unit)? = null
 ) {
     Row(
         Modifier.fillMaxWidth()
@@ -319,7 +354,16 @@ private fun SongRow(
             Text("${song.artist} · ${song.album}", color = Muted, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         IconButton(onClick = onFavorite) {
-            Icon(if (favorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder, "Favorite", tint = if (favorite) Gold else Muted)
+            Icon(
+                if (favorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                "Favorite",
+                tint = if (favorite) Gold else Muted
+            )
+        }
+        onRemove?.let { remove ->
+            IconButton(onClick = remove) {
+                Icon(Icons.Filled.DeleteOutline, "Remove from queue", tint = Muted)
+            }
         }
     }
 }
@@ -358,7 +402,7 @@ private fun FullPlayer(state: PlayerState, vm: IsaiViewModel, onDismiss: () -> U
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                         IconButton(onClick = onDismiss) { Icon(Icons.Filled.KeyboardArrowDown, "Close player") }
                         Text("NOW PLAYING", Modifier.weight(1f), textAlign = TextAlign.Center, color = Gold, fontWeight = FontWeight.Bold)
-                        IconButton(onClick = {}) { Icon(Icons.Filled.MoreHoriz, "More") }
+                        Spacer(Modifier.size(48.dp))
                     }
                     Spacer(Modifier.height(14.dp))
                     AsyncImage(song.artworkUri, null, Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(28.dp)), contentScale = ContentScale.Crop)
