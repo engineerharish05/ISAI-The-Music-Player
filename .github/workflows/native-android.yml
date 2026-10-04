@@ -1,16 +1,23 @@
-name: Build ISAI Native Android
+name: ISAI Native — Build & Verify
 
 on:
   workflow_dispatch:
   push:
-    branches: ["main"]
+    branches:
+      - main
+      - isai-architecture-blueprint
     paths:
       - "native-android/**"
       - ".github/workflows/native-android.yml"
 
+permissions:
+  contents: read
+
 jobs:
-  build:
+  verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -20,19 +27,27 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
+          cache: gradle
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.11.1"
 
-      - name: Build native debug APK
+      - name: Verify and build
         working-directory: native-android
-        run: gradle assembleDebug --stacktrace
+        run: bash verify.sh
 
-      - name: Upload native debug APK
+      - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: isai-native-debug-apk
+          name: isai-debug-apk
           path: native-android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+
+      - name: Upload release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: isai-release-unsigned-apk
+          path: native-android/app/build/outputs/apk/release/app-release-unsigned.apk
           if-no-files-found: error
