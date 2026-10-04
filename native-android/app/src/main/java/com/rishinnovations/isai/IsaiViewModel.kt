@@ -252,6 +252,7 @@ class IsaiViewModel(app: Application) : AndroidViewModel(app) {
         val index = player.currentMediaItemIndex
         val current = queue.getOrNull(index)
 
+        val wasPlaying = _player.value.isPlaying
         val next = _player.value.copy(
             currentSong = current,
             isPlaying = player.isPlaying,
@@ -268,7 +269,7 @@ class IsaiViewModel(app: Application) : AndroidViewModel(app) {
         _player.value = next
 
         if (current != null) persistQueue(queue, index)
-        if (kotlin.math.abs(next.positionMs - lastPersistedPositionMs) >= 1000L || next.isPlaying != _player.value.isPlaying) {
+        if (kotlin.math.abs(next.positionMs - lastPersistedPositionMs) >= 1000L || next.isPlaying != wasPlaying) {
             lastPersistedPositionMs = next.positionMs
         }
         prefs.edit()
