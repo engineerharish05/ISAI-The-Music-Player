@@ -393,21 +393,29 @@ private fun FullPlayer(state: PlayerState, vm: IsaiViewModel, onDismiss: () -> U
     val song = state.currentSong ?: return
     Dialog(onDismissRequest = onDismiss) {
         Surface(Modifier.fillMaxSize(), color = Black) {
-            Box(Modifier.fillMaxSize()) {
+            BoxWithConstraints(Modifier.fillMaxSize()) {
                 Box(
                     Modifier.fillMaxWidth().height(320.dp).background(
                         Brush.verticalGradient(listOf(Gold.copy(alpha = .22f), Black.copy(alpha = 0f)))
                     )
                 )
-                Column(Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 12.dp)) {
+                val imageSize = minOf(maxWidth - 40.dp, (maxHeight * 0.42f).coerceAtMost(maxWidth - 40.dp))
+                Column(
+                    Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 12.dp)
+                ) {
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                         IconButton(onClick = onDismiss) { Icon(Icons.Filled.KeyboardArrowDown, "Close player") }
                         Text("NOW PLAYING", Modifier.weight(1f), textAlign = TextAlign.Center, color = Gold, fontWeight = FontWeight.Bold)
                         Spacer(Modifier.size(48.dp))
                     }
-                    Spacer(Modifier.height(14.dp))
-                    AsyncImage(song.artworkUri, null, Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(28.dp)), contentScale = ContentScale.Crop)
-                    Spacer(Modifier.height(18.dp))
+                    Spacer(Modifier.height(10.dp))
+                    AsyncImage(
+                        song.artworkUri,
+                        null,
+                        Modifier.size(imageSize).align(Alignment.CenterHorizontally).clip(RoundedCornerShape(28.dp)),
+                        contentScale = ContentScale.Crop
+                    )
+                    Spacer(Modifier.height(12.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
                             Text(song.title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
