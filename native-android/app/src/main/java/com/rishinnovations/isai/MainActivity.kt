@@ -58,7 +58,7 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            IsaiApp()
+            IsaiApp(permissionRefresh = permissionRefresh.intValue)
         }
     }
 }
