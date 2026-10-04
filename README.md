@@ -31,7 +31,7 @@ The verification pipeline runs unit tests, lint, a debug APK build and a release
 
 **Native Android is the only Android application implementation.**
 
-The previous Capacitor/web-wrapper implementation has been removed. ISAI will not use Capacitor, Cordova, a WebView-based Android shell, or a generated Capacitor Android project for the production app.
+The legacy web-based Android wrapper has been removed. The production app uses the native Android implementation directly.
 
 The native implementation will be extended directly for local playback, playlists, lyrics, equalizer/effects, downloads, Android Auto, widgets, analytics and online-service integrations.
 
