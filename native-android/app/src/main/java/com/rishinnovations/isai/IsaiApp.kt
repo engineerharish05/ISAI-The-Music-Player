@@ -10,7 +10,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -71,10 +70,12 @@ fun IsaiApp(permissionRefresh: Int = 0, vm: IsaiViewModel = viewModel()) {
                         MiniPlayer(song, player, { showPlayer = true }, vm::togglePlayPause, vm::next)
                     }
                     NavigationBar(containerColor = Surface, tonalElevation = 0.dp) {
-                        NavigationItem(0, tab, Icons.Filled.Home, "Home") { tab = it }
-                        NavigationItem(1, tab, Icons.Filled.Search, "Search") { tab = it }
-                        NavigationItem(2, tab, Icons.Filled.LibraryMusic, "Library") { tab = it }
-                        NavigationItem(3, tab, Icons.Filled.QueueMusic, "Queue") { tab = it }
+                        Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
+                            NavigationItem(0, tab, Icons.Filled.Home, "Home", Modifier.weight(1f)) { tab = it }
+                            NavigationItem(1, tab, Icons.Filled.Search, "Search", Modifier.weight(1f)) { tab = it }
+                            NavigationItem(2, tab, Icons.Filled.LibraryMusic, "Library", Modifier.weight(1f)) { tab = it }
+                            NavigationItem(3, tab, Icons.Filled.QueueMusic, "Queue", Modifier.weight(1f)) { tab = it }
+                        }
                     }
                 }
             }
@@ -99,14 +100,25 @@ private fun NavigationItem(
     selectedIndex: Int,
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     label: String,
+    modifier: Modifier = Modifier,
     onSelect: (Int) -> Unit
 ) {
-    NavigationBarItem(
-        selected = selectedIndex == index,
-        onClick = { onSelect(index) },
-        icon = { Icon(icon, contentDescription = label) },
-        label = { Text(label) }
-    )
+    val selected = selectedIndex == index
+    Column(
+        modifier
+            .clip(RoundedCornerShape(18.dp))
+            .background(if (selected) Gold.copy(alpha = .14f) else Color.Transparent)
+            .clickable { onSelect(index) }
+            .padding(vertical = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Icon(icon, contentDescription = label, tint = if (selected) Gold else Muted)
+        Text(
+            label,
+            style = MaterialTheme.typography.labelSmall,
+            color = if (selected) Gold else Muted
+        )
+    }
 }
 
 @Composable
