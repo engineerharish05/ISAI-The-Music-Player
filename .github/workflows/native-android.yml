@@ -8,6 +8,10 @@ on:
       - "native-android/**"
       - ".github/workflows/native-android.yml"
 
+concurrency:
+  group: isai-native-android
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
