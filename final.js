@@ -399,42 +399,27 @@
     if(!s) return;
     const current=audio.currentTime||0;
     const duration=audio.duration||s.duration||1;
-    view.innerHTML=
-      '<div class="player">'+
-      '<button class="back" data-action="player-back">‹ Back</button>'+
-      '<div class="big-cover" style="background:'+s.color+'">'+(s.cover?'<img src="'+s.cover+'" alt="">':"♫")+'</div>'+
-      '<button class="heart '+(state.favorites.has(s.id)?"active":"")+'" data-player-fav="'+esc(String(s.id))+'" aria-label="Favorite">'+
-        (state.favorites.has(s.id)?"♥":"♡")+
-      '</button>'+
-      '<div class="player-title">'+esc(s.title)+'</div>'+
-      '<div class="player-artist">'+esc(s.artist)+" · "+esc(s.album)+'</div>'+
-      '<div class="progress"><input id="seek" type="range" min="0" max="'+Math.max(1,duration)+'" value="'+Math.floor(current)+'"><div class="times"><span id="cur">'+fmt(current)+'</span><span id="dur">'+fmt(duration)+'</span></div></div>'+
-      '<div class="volume-row"><span>−</span><input id="volume" type="range" min="0" max="1" step=".01" value="'+state.volume+'"><span>＋</span></div>'+
-      '<div class="controls"><button class="control" data-action="shuffle">⤨</button><button class="control" data-action="previous">‹</button><button class="control main" data-action="play">'+(state.playing?"Ⅱ":"▶")+'</button><button class="control" data-action="next">›</button><button class="control" data-action="repeat">↻</button></div>'+
-      '<div class="tools"><button class="chip" data-action="lyrics">Lyrics</button><button class="chip" data-action="queue">Queue</button><button class="chip" data-action="equalizer">EQ</button><button class="chip" data-action="sleep">Sleep</button></div>'+
-      '</div>';
+    const artHtml=s.cover?'<img src="'+s.cover+'" alt="">':'<div class="np-placeholder">♫</div>';
+    view.innerHTML='<section class="now-playing">'+
+      '<div class="np-top"><button class="np-close" data-action="player-back">⌄</button><span>NOW PLAYING</span><div class="np-actions"><button class="np-icon '+(state.favorites.has(s.id)?"active":"")+'" data-player-fav="'+esc(String(s.id))+'">♡</button><button class="np-icon" data-action="queue">☷</button></div></div>'+
+      '<div class="np-art" style="background:'+(s.color||"linear-gradient(145deg,#171713,#b48b32)")+'">'+artHtml+'</div>'+
+      '<div class="np-title-row"><div><h1>'+esc(s.title)+'</h1><p>'+esc(s.artist)+'</p></div><button class="np-heart '+(state.favorites.has(s.id)?"active":"")+'" data-player-fav="'+esc(String(s.id))+'">♡</button></div>'+
+      '<div class="np-progress"><input id="seek" type="range" min="0" max="'+Math.max(1,duration)+'" value="'+Math.floor(current)+'"><div class="times"><span id="cur">'+fmt(current)+'</span><span id="dur">'+fmt(duration)+'</span></div></div>'+
+      '<div class="np-controls"><button data-action="shuffle">⤨</button><button data-action="previous">◀</button><button class="np-main" data-action="play">'+(state.playing?"Ⅱ":"▶")+'</button><button data-action="next">▶</button><button data-action="repeat">↻</button></div>'+
+      '<div class="np-tools"><button data-action="lyrics">▤</button><button data-action="queue">☷</button><button data-action="equalizer">⌁</button><button data-action="sleep">◷</button></div>'+
+      '<div class="np-tabs"><button class="active">Lyrics</button><button data-action="queue">Related</button><button data-action="queue">Up Next</button></div>'+
+      '<div class="np-lyrics-preview"><b>Oru naalil</b><b>Yen nilai maari</b><b>Unnai thedi naan varuven…</b><span>Lyrics will follow the current track when a synced source is available.</span></div>'+
+      '</section>';
     wire();
     const seek=document.querySelector("#seek");
     if(seek)seek.oninput=async e=>{
       const value=Number(e.target.value)||0;
-      if(nativeLibraryReady&&nativeAudio&&nativeAssetId){
-        try{await nativeAudio.setCurrentTime({assetId:nativeAssetId,time:value})}catch(_){}
-      }else audio.currentTime=value;
+      if(nativeLibraryReady&&nativeAudio&&nativeAssetId){try{await nativeAudio.setCurrentTime({assetId:nativeAssetId,time:value})}catch(_){}}
+      else audio.currentTime=value;
       progress();
     };
-    const volume=document.querySelector("#volume");
-    if(volume)volume.oninput=async e=>{
-      state.volume=Math.max(0,Math.min(1,Number(e.target.value)||0));
-      audio.volume=state.volume;
-      if(nativeLibraryReady&&nativeAudio&&nativeAssetId){
-        try{await nativeAudio.setVolume({assetId:nativeAssetId,volume:Math.max(0,Math.min(1,state.volume))})}catch(_){}
-      }
-      persistCurrent();
-    };
-    document.querySelector("[data-player-fav]")?.addEventListener("click",e=>{
-      e.stopPropagation();
-      toggleFav(e.currentTarget.dataset.playerFav);
-      player();
+    document.querySelectorAll("[data-player-fav]").forEach(btn=>btn.onclick=e=>{
+      e.stopPropagation();toggleFav(e.currentTarget.dataset.playerFav);player();
     });
   };
 
