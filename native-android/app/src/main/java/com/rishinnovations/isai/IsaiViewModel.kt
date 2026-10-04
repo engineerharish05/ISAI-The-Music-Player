@@ -62,7 +62,7 @@ class IsaiViewModel(app: Application) : AndroidViewModel(app) {
                     if (queuedSongs.isNotEmpty()) {
                         val safeIndex = _player.value.queueIndex
                             .coerceIn(0, queuedSongs.lastIndex)
-                        install(it, queuedSongs, safeIndex, false)
+                        install(it, queuedSongs, safeIndex, true)
                     }
                     sync(it)
                 }
