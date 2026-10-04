@@ -126,9 +126,12 @@ function setPage(p){
 function row(s){return '<div class="song" data-song="'+esc(String(s.id))+'">'+art(s)+'<div class="song-info"><b>'+esc(s.title)+'</b><span>'+esc(s.artist)+" · "+esc(s.album)+" · "+fmt(s.duration)+'</span></div><button class="heart '+(state.favorites.has(s.id)?"active":"")+'" data-fav="'+s.id+'">'+(state.favorites.has(s.id)?"♥":"♡")+'</button><button class="more" data-more="'+s.id+'">⋯</button></div>'}
 function render(){
   document.body.classList.toggle("dark",state.theme==="dark");
+  document.body.classList.remove("player-mode","lyrics-mode","splash-mode");
+  document.body.dataset.page=state.page;
   const themeMeta=document.querySelector('meta[name="theme-color"]'); if(themeMeta)themeMeta.content="#080807";
   document.querySelectorAll(".nav").forEach(n=>n.classList.toggle("active",n.dataset.page===state.page));
   if(!state.booted){
+    document.body.classList.add("splash-mode");
     view.innerHTML='<section class="splash-screen"><div class="splash-glow"></div><img class="splash-logo" src="assets/isai-logo.jpg" alt="ISAI"><div class="splash-wordmark">ISAI</div><div class="splash-tag">MUSIC BEYOND LIMITS</div></section>';
     if(!window.__isaiBootTimer)window.__isaiBootTimer=setTimeout(()=>{state.booted=true;render()},900);
     return;
