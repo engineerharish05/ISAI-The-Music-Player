@@ -26,6 +26,9 @@ class IsaiViewModel(app: Application) : AndroidViewModel(app) {
     private val _player = MutableStateFlow(PlayerState())
     val playerState: StateFlow<PlayerState> = _player
 
+    private val _favorites = MutableStateFlow(loadFavoriteIds())
+    val favorites: StateFlow<Set<Long>> = _favorites
+
     private val executor = Executors.newSingleThreadExecutor()
     private var controller: MediaController? = null
     private var queuedSongs: List<Song> = emptyList()
@@ -117,6 +120,14 @@ class IsaiViewModel(app: Application) : AndroidViewModel(app) {
         _songs.value.takeIf { it.isNotEmpty() }?.let { replaceQueue(it, 0, true) }
     }
 
+    fun toggleFavorite(songId: Long) {
+        val next = _favorites.value.toMutableSet().apply {
+            if (!add(songId)) remove(songId)
+        }.toSet()
+        _favorites.value = next
+        prefs.edit().putString("favorite_ids", next.joinToString(",")).apply()
+    }
+
     fun togglePlayPause() {
         controller?.let { if (it.isPlaying) it.pause() else it.play() }
     }
@@ -148,6 +159,13 @@ class IsaiViewModel(app: Application) : AndroidViewModel(app) {
             }
         }
     }
+
+    private fun loadFavoriteIds(): Set<Long> =
+        prefs.getString("favorite_ids", null)
+            ?.split(",")
+            ?.mapNotNull(String::toLongOrNull)
+            ?.toSet()
+            .orEmpty()
 
     private fun restoreSettings(player: MediaController) {
         player.shuffleModeEnabled = prefs.getBoolean("shuffle", false)
