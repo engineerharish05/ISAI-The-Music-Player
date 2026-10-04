@@ -74,7 +74,7 @@ fun IsaiApp(permissionRefresh: Int = 0, vm: IsaiViewModel = viewModel()) {
                             NavigationItem(0, tab, Icons.Filled.Home, "Home", Modifier.weight(1f)) { tab = it }
                             NavigationItem(1, tab, Icons.Filled.Search, "Search", Modifier.weight(1f)) { tab = it }
                             NavigationItem(2, tab, Icons.Filled.LibraryMusic, "Library", Modifier.weight(1f)) { tab = it }
-                            NavigationItem(3, tab, Icons.Filled.QueueMusic, "Queue", Modifier.weight(1f)) { tab = it }
+                            NavigationItem(3, tab, Icons.AutoMirrored.Filled.QueueMusic, "Queue", Modifier.weight(1f)) { tab = it }
                         }
                     }
                 }
