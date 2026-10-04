@@ -110,9 +110,13 @@ class IsaiViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun play(song: Song) {
-        val baseQueue = _player.value.queue.ifEmpty { _songs.value }
-        val queue = if (baseQueue.isEmpty()) listOf(song) else baseQueue
-        val index = queue.indexOfFirst { it.id == song.id }.takeIf { it >= 0 } ?: 0
+        val currentQueue = _player.value.queue
+        val queue = when {
+            currentQueue.any { it.id == song.id } -> currentQueue
+            _songs.value.any { it.id == song.id } -> _songs.value
+            else -> listOf(song)
+        }
+        val index = queue.indexOfFirst { it.id == song.id }.coerceAtLeast(0)
         replaceQueue(queue, index, true)
     }
 
@@ -126,6 +130,33 @@ class IsaiViewModel(app: Application) : AndroidViewModel(app) {
         }.toSet()
         _favorites.value = next
         prefs.edit().putString("favorite_ids", next.joinToString(",")).apply()
+    }
+
+    fun removeFromQueue(songId: Long) {
+        val player = controller ?: return
+        val index = player.currentTimeline.indexOfFirst { window ->
+            player.getMediaItemAt(window.windowIndex).mediaId == songId.toString()
+        }
+        if (index < 0 || player.currentMediaItemIndex == index) return
+        player.removeMediaItem(index)
+        sync(player)
+    }
+
+    fun clearQueue() {
+        controller?.stop()
+        controller?.clearMediaItems()
+        queuedSongs = emptyList()
+        _player.value = PlayerState(
+            shuffle = false,
+            repeatMode = RepeatMode.OFF
+        )
+        prefs.edit()
+            .remove("queue_ids")
+            .remove("queue_index")
+            .remove("position_ms")
+            .putBoolean("shuffle", false)
+            .putInt("repeat_mode", Player.REPEAT_MODE_OFF)
+            .apply()
     }
 
     fun togglePlayPause() {
