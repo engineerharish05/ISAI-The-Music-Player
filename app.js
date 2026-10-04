@@ -139,7 +139,7 @@ function render(){
 function onboarding(){
   view.innerHTML='<section class="onboarding"><div class="onboard-art"><div class="orb orb-a"></div><div class="orb orb-b"></div><div class="onboard-symbol">♫</div></div><div class="onboard-copy"><div class="eyebrow">WELCOME TO ISAI</div><h1>Music without<br>boundaries.</h1><p>Search, stream, discover and enjoy your music in one refined listening experience.</p></div><div class="onboard-dots"><i class="active"></i><i></i><i></i><i></i></div><button class="onboard-next" data-action="finish-onboarding">→</button><button class="onboard-skip" data-action="finish-onboarding">Skip</button></section>'; wire();
 }
-function featureCard(title,sub,cls,page){return '<button class="feature-card '+cls+'" data-page="'+page+'"><span>'+esc(sub)+'</span><b>'+esc(title)+'</b><i>↗</i></button>}
+function featureCard(title,sub,cls,page){return `<button class="feature-card ${cls}" data-page="${page}"><span>${esc(sub)}</span><b>${esc(title)}</b><i>↗</i></button>`}
 function home(){
   const recent=state.history.map(id=>songs.find(s=>String(s.id)===String(id))).filter(Boolean).slice(0,8), base=(recent.length?recent:songs).slice(0,8);
   const albums=[...new Map(songs.map(s=>[s.album,s])).values()].filter(s=>s.album&&s.album!=="Unknown album").slice(0,8), first=songs[0];
