@@ -32,6 +32,7 @@ class IsaiViewModel(app: Application) : AndroidViewModel(app) {
     private val executor = Executors.newSingleThreadExecutor()
     private var controller: MediaController? = null
     private var queuedSongs: List<Song> = emptyList()
+    private var lastPersistedPositionMs = -1L
 
     private val listener = object : Player.Listener {
         override fun onEvents(player: Player, events: Player.Events) = sync(player)
@@ -41,7 +42,7 @@ class IsaiViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             while (true) {
                 controller?.let(::sync)
-                delay(250)
+                delay(1000)
             }
         }
     }
@@ -221,7 +222,8 @@ class IsaiViewModel(app: Application) : AndroidViewModel(app) {
         player: MediaController,
         songs: List<Song>,
         index: Int,
-        resumePosition: Boolean
+        resumePosition: Boolean,
+        playNow: Boolean = false
     ) {
         player.setMediaItems(songs.map(::toItem), index, 0L)
         player.prepare()
@@ -229,6 +231,7 @@ class IsaiViewModel(app: Application) : AndroidViewModel(app) {
             val position = prefs.getLong("position_ms", 0L)
             if (position > 0L) player.seekTo(position)
         }
+        if (playNow) player.play()
     }
 
     private fun toItem(song: Song) = MediaItem.Builder()
@@ -265,6 +268,9 @@ class IsaiViewModel(app: Application) : AndroidViewModel(app) {
         _player.value = next
 
         if (current != null) persistQueue(queue, index)
+        if (kotlin.math.abs(next.positionMs - lastPersistedPositionMs) >= 1000L || next.isPlaying != _player.value.isPlaying) {
+            lastPersistedPositionMs = next.positionMs
+        }
         prefs.edit()
             .putLong("position_ms", next.positionMs)
             .putBoolean("shuffle", next.shuffle)
