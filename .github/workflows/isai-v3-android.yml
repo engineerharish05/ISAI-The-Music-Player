@@ -5,6 +5,7 @@ on:
     branches: ["isai-v3-foundation"]
   pull_request:
     branches: ["isai-v3-foundation"]
+  workflow_dispatch:
 
 jobs:
   build:
@@ -21,3 +22,9 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Assemble debug APK
         run: gradle assembleDebug
+      - name: Upload preview APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ISAI-preview-debug
+          path: isai-v3/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
