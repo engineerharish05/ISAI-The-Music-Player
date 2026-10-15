@@ -2,14 +2,14 @@ name: Build ISAI Native Android
 
 on:
   workflow_dispatch:
+  pull_request:
+    paths: ["native-android/**", ".github/workflows/native-android.yml", "scripts/**"]
   push:
-    branches: ["main"]
-    paths:
-      - "native-android/**"
-      - ".github/workflows/native-android.yml"
+    branches: ["main", "claude/**"]
+    paths: ["native-android/**", ".github/workflows/native-android.yml", "scripts/**"]
 
 concurrency:
-  group: isai-native-android
+  group: isai-native-android-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -18,7 +18,11 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: native-android
+        shell: bash
 
     steps:
       - name: Checkout
@@ -29,7 +33,6 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
-          cache: gradle
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -37,31 +40,72 @@ jobs:
           gradle-version: "8.11.1"
 
       - name: Unit tests
-        working-directory: native-android
-        run: gradle testDebugUnitTest
+        id: unit
+        run: |
+          set -o pipefail
+          gradle --no-daemon --console=plain testDebugUnitTest 2>&1 | tee ../unit.log
 
-      - name: Lint
-        working-directory: native-android
-        run: gradle lintDebug
+      - name: Annotate unit test failures
+        if: failure() && steps.unit.outcome == 'failure'
+        working-directory: .
+        run: scripts/ci-annotate.sh "unit tests" unit.log
 
       - name: Build debug APK
-        working-directory: native-android
-        run: gradle assembleDebug
+        id: debug
+        run: |
+          set -o pipefail
+          gradle --no-daemon --console=plain assembleDebug 2>&1 | tee ../debug.log
 
-      - name: Build release APK
-        working-directory: native-android
-        run: gradle assembleRelease
+      - name: Annotate debug build failures
+        if: failure() && steps.debug.outcome == 'failure'
+        working-directory: .
+        run: scripts/ci-annotate.sh "assembleDebug" debug.log
+
+      - name: Lint
+        id: lint
+        run: |
+          set -o pipefail
+          gradle --no-daemon --console=plain lintDebug 2>&1 | tee ../lint.log
+
+      - name: Annotate lint failures
+        if: failure() && steps.lint.outcome == 'failure'
+        working-directory: .
+        run: scripts/ci-annotate.sh "lintDebug" lint.log
+
+      - name: Build release APK (unsigned)
+        id: release
+        run: |
+          set -o pipefail
+          gradle --no-daemon --console=plain assembleRelease 2>&1 | tee ../release.log
+
+      - name: Annotate release build failures
+        if: failure() && steps.release.outcome == 'failure'
+        working-directory: .
+        run: scripts/ci-annotate.sh "assembleRelease" release.log
 
       - name: Upload debug APK
+        if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: isai-native-debug-apk
-          path: native-android/app/build/outputs/apk/debug/app-debug.apk
+          name: isai-debug-apk
+          path: native-android/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
 
-      - name: Upload release APK
+      - name: Upload release APK (unsigned)
+        if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: isai-native-release-unsigned-apk
-          path: native-android/app/build/outputs/apk/release/app-release-unsigned.apk
+          name: isai-release-unsigned-apk
+          path: native-android/app/build/outputs/apk/release/*.apk
           if-no-files-found: error
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: isai-reports
+          path: |
+            native-android/app/build/reports/
+            native-android/app/build/test-results/
+            *.log
+          if-no-files-found: ignore
