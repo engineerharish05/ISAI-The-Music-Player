@@ -25,7 +25,8 @@ object LrcParser {
         for (rawLine in text.lines()) {
             val line = rawLine.trim()
             if (line.isEmpty()) continue
-            offsetTag.find(line)?.let { offset = it.groupValues[1].toLong(); continue }
+            val offsetMatch = offsetTag.find(line)
+            if (offsetMatch != null) { offset = offsetMatch.groupValues[1].toLong(); continue }
             val stamps = timestamp.findAll(line).toList()
             if (stamps.isEmpty()) {
                 if (!metaTag.matches(line)) plain += LyricLine(null, line)
