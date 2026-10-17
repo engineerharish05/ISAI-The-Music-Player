@@ -5,7 +5,15 @@
 set -u
 label="${1:-build}"
 log="${2:-build.log}"
-[ -f "$log" ] || exit 0
+[ -f "$log" ] || 
+# Full lint findings (the console only prints the first one)
+report="native-android/app/build/reports/lint-results-debug.txt"
+if [ -f "$report" ]; then
+  grep -E ': (Error|Warning): ' "$report" | sed 's#/home/runner/work/[^/]*/[^/]*/native-android/app/##' | grep ': Error: ' | head -n 60 | split -l 10 - /tmp/lint_err_
+  for f in /tmp/lint_err_*; do [ -f "$f" ] && emit "Lint errors" < "$f"; done
+  rm -f /tmp/lint_err_*
+fi
+exit 0
 
 emit() { # title, body-lines-on-stdin
   local body
@@ -26,4 +34,12 @@ grep -E 'AAPT|error:|Manifest merger failed|Lint found|Execution failed for task
 
 # Test failures
 grep -E 'FAILED|AssertionError|Exception:' "$log" | head -n 15 | emit "Test failures"
+
+# Full lint findings (the console only prints the first one)
+report="native-android/app/build/reports/lint-results-debug.txt"
+if [ -f "$report" ]; then
+  grep -E ': (Error|Warning): ' "$report" | sed 's#/home/runner/work/[^/]*/[^/]*/native-android/app/##' | grep ': Error: ' | head -n 60 | split -l 10 - /tmp/lint_err_
+  for f in /tmp/lint_err_*; do [ -f "$f" ] && emit "Lint errors" < "$f"; done
+  rm -f /tmp/lint_err_*
+fi
 exit 0
