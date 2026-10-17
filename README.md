@@ -1,47 +1,68 @@
-# ISAI — The Music Player
+# ISAI — The Music Experience
 
-ISAI is a native Android music player built with Kotlin, Jetpack Compose and AndroidX Media3.
+*Your Day, Your moments, Your Isai.*
+A refined music experience designed around the songs you love.
 
-## Native Android implementation
+ISAI is an open-source, offline-first Android music player written natively in Kotlin with Jetpack Compose and AndroidX Media3. It plays the music already on your device. It has no ads, no accounts, no tracking and no internet permission.
 
-The Android app is implemented natively under `native-android/`.
+![ISAI emblem](assets/isai-play-store-icon-512.png)
 
-- Native Jetpack Compose UI
-- Home, Explore, Library, Playlists and Settings
-- Local MediaStore music scanning
-- Media3 playback engine
-- Background playback through MediaSessionService
-- Android audio and notification permissions
-- Room persistence foundation
-- ISAI premium visual system
+## Features
+
+Status is stated honestly: see [docs/FEATURES.md](docs/FEATURES.md) for exactly what is verified and what is not.
+
+- Home, Explore, Library, Playlists and Settings tabs, with search one tap away
+- Local library from Android MediaStore, plus files and folders you pick yourself
+- Background playback with a media notification, lock-screen controls, queue, shuffle and repeat
+- Favorites, playlists (create, rename, reorder, remove), listening statistics
+- Lyrics from embedded MP3 (ID3) / FLAC tags or an attached `.lrc` / `.txt` file; synced lines highlight as the song plays
+- Equalizer, bass boost and loudness using the device's own audio effects
+- Fade between tracks, playback speed, sleep timer (countdown or end of song)
+- Real-time visualizer driven by the audio that is actually playing
+- Offline, rule-based recommendations that explain why each section is shown
+- Home-screen widget and Android Auto browse support
+- Dark-first golden theme with a light theme, and a reduce-motion option
+
+Not included by design: streaming, downloading, online lyrics, accounts, cloud sync. See [docs/FEATURES.md](docs/FEATURES.md).
 
 ## Build
 
-Run the native verification script:
+Requirements: JDK 17, Android SDK (platform 35), Gradle 8.11+.
 
 ```bash
 cd native-android
-./verify.sh
+gradle testDebugUnitTest assembleDebug lintDebug assembleRelease
 ```
 
-The verification pipeline runs unit tests, lint, debug APK assembly and release APK assembly.
+- Debug APK: `native-android/app/build/outputs/apk/debug/app-debug.apk`
+- Release APK is unsigned unless you provide a keystore through the environment variables `ISAI_KEYSTORE_PATH`, `ISAI_KEYSTORE_PASSWORD`, `ISAI_KEY_ALIAS`, `ISAI_KEY_PASSWORD`. No signing secrets are stored in this repository.
 
-## Architecture
+GitHub Actions (`.github/workflows/native-android.yml`) runs the unit tests, debug build, lint and release build on every push and pull request and uploads the APKs and reports as artifacts.
 
-**Native Android is the only Android application implementation.**
+## Install
 
-The legacy web-based Android wrapper has been removed. The production app is built directly with the native Android stack.
+Download `app-debug.apk` from the latest workflow run's artifacts, enable "install unknown apps" for your file manager or browser, and open the file. On first launch allow access to music, or use **Add music** to pick files or a folder.
 
-The native implementation will be extended directly for local playback, playlists, lyrics, equalizer/effects, downloads, Android Auto, widgets, analytics and online-service integrations.
+## Project layout
 
-## Licensing
+```
+native-android/app/src/main/java/com/rishinnovations/isai/
+  model/      plain data types
+  logic/      pure Kotlin: lyrics parsers, search, sorting, recommendations, playback math (unit tested)
+  data/       Room database, DataStore settings, MediaStore + file import, artwork, lyrics
+  playback/   Media3 MediaLibraryService, queue persistence, audio effects, sleep timer, Android Auto tree
+  widget/     home-screen widget
+  ui/         Compose screens, components, theme, navigation
+docs/         features and verification status, privacy, dependencies
+```
 
-Original ISAI source code is released under the standard **Apache License 2.0**. This recognized open-source license permits use, modification, redistribution, and commercial use subject to its terms.
+## Documentation
 
-ISAI branding is separate from the software license. The ISAI name, logo, artwork, and other marks are not granted as trademarks.
+- [Feature and verification status](docs/FEATURES.md)
+- [Privacy](docs/PRIVACY.md)
+- [Dependencies and licenses](docs/DEPENDENCIES.md)
+- [Contributing](CONTRIBUTING.md)
 
-See [LICENSE](LICENSE) and [NOTICE-SIMPMUSIC.md](NOTICE-SIMPMUSIC.md) for details. Third-party dependencies remain under their own licenses.
+## License
 
-## Project
-
-Repository: engineerharish05/ISAI-The-Music-Player
+Source code: Apache License 2.0 ([LICENSE](LICENSE)). The ISAI name and emblem are covered by [LICENSE-ISAI.md](LICENSE-ISAI.md). Third-party notes: [NOTICE-SIMPMUSIC.md](NOTICE-SIMPMUSIC.md).
