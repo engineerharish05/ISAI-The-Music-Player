@@ -25,16 +25,23 @@ Status is stated honestly: see [docs/FEATURES.md](docs/FEATURES.md) for exactly 
 
 Optional online music (off by default): search archive.org and Jamendo, stream, and save tracks to your library. Not included by design: YouTube/Spotify or any service that forbids third-party access, online lyrics, accounts, cloud sync. See [docs/FEATURES.md](docs/FEATURES.md).
 
+## Editions
+
+One codebase builds two apps (Gradle product flavors):
+
+- **isai**: the offline-first player. Online music is off until you enable it in Settings.
+- **stream** ("ISAI Stream", application id `com.rishinnovations.isai.stream`): the same player, online-first. It starts on the open-music search and has online sources enabled by default. It installs alongside the main app. It is not a YouTube Music client: it only uses open catalogues that permit listening (archive.org and, if you supply a free client id, Jamendo).
+
 ## Build
 
 Requirements: JDK 17, Android SDK (platform 35), Gradle 8.11+.
 
 ```bash
 cd native-android
-gradle testDebugUnitTest assembleDebug lintDebug assembleRelease
+gradle testDebugUnitTest assembleDebug lintIsaiDebug lintStreamDebug assembleRelease
 ```
 
-- Debug APK: `native-android/app/build/outputs/apk/debug/app-debug.apk`
+- Debug APKs: `native-android/app/build/outputs/apk/isai/debug/` and `.../stream/debug/`
 - Release APK is unsigned unless you provide a keystore through the environment variables `ISAI_KEYSTORE_PATH`, `ISAI_KEYSTORE_PASSWORD`, `ISAI_KEY_ALIAS`, `ISAI_KEY_PASSWORD`. No signing secrets are stored in this repository.
 
 GitHub Actions (`.github/workflows/native-android.yml`) runs the unit tests, debug build, lint and release build on every push and pull request and uploads the APKs and reports as artifacts.

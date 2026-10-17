@@ -138,7 +138,8 @@ class ArtworkProvider : ContentProvider() {
     override fun update(uri: Uri, values: ContentValues?, selection: String?, selectionArgs: Array<out String>?): Int = 0
 
     companion object {
-        const val AUTHORITY = "com.rishinnovations.isai.art"
+        /** Set from the real application id at startup so two editions can be installed together. */
+        @Volatile var AUTHORITY: String = "com.rishinnovations.isai.art"
         fun uriFor(songId: Long): Uri = Uri.parse("content://$AUTHORITY/$songId")
     }
 }

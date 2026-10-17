@@ -62,6 +62,7 @@ class IsaiApplication : Application(), ImageLoaderFactory {
 
     override fun onCreate() {
         super.onCreate()
+        com.rishinnovations.isai.data.library.ArtworkProvider.AUTHORITY = "$packageName.art"
         container = AppContainer(this)
     }
 

@@ -135,7 +135,7 @@ fun IsaiApp(player: PlayerViewModel, app: AppViewModel) {
 private fun IsaiShell(player: PlayerViewModel, app: AppViewModel) {
     val context = LocalContext.current
     val container = remember { context.container }
-    val nav = androidx.compose.runtime.saveable.rememberSaveable(saver = NavState.Saver) { NavState() }
+    val nav = androidx.compose.runtime.saveable.rememberSaveable(saver = NavState.Saver) { NavState(initialStack = if (com.rishinnovations.isai.BuildConfig.ONLINE_FIRST) listOf(Route.Online) else emptyList()) }
     val settings by app.settings.collectAsStateWithLifecycle()
     val playerState by player.state.collectAsStateWithLifecycle()
     val favoriteSet by app.favoriteSet.collectAsStateWithLifecycle()

@@ -23,6 +23,24 @@ android {
         buildConfigField("String", "JAMENDO_CLIENT_ID", "\"$jamendoId\"")
     }
 
+    // Two editions share one codebase: "isai" is the offline-first player; "stream" is an online-first
+    // edition (own application id so both can be installed) that starts on the open-catalogue search.
+    flavorDimensions += "edition"
+    productFlavors {
+        create("isai") {
+            dimension = "edition"
+            resValue("string", "app_name", "ISAI")
+            buildConfigField("boolean", "ONLINE_FIRST", "false")
+        }
+        create("stream") {
+            dimension = "edition"
+            applicationIdSuffix = ".stream"
+            versionNameSuffix = "-stream"
+            resValue("string", "app_name", "ISAI Stream")
+            buildConfigField("boolean", "ONLINE_FIRST", "true")
+        }
+    }
+
     // Release signing is configured only when credentials are supplied through the environment
     // (for example GitHub Actions secrets). Nothing secret is stored in the repository.
     val keystorePath = System.getenv("ISAI_KEYSTORE_PATH")

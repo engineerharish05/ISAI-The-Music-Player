@@ -53,7 +53,7 @@
         <!-- Read-only cover art for the media notification, widget and Android Auto. -->
         <provider
             android:name=".data.library.ArtworkProvider"
-            android:authorities="com.rishinnovations.isai.art"
+            android:authorities="${applicationId}.art"
             android:exported="true" />
 
         <receiver

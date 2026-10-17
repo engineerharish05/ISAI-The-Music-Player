@@ -65,7 +65,7 @@ jobs:
         id: lint
         run: |
           set -o pipefail
-          gradle --no-daemon --console=plain lintDebug 2>&1 | tee ../lint.log
+          gradle --no-daemon --console=plain lintIsaiDebug lintStreamDebug 2>&1 | tee ../lint.log
 
       - name: Annotate lint failures
         if: failure() && steps.lint.outcome == 'failure'
@@ -87,16 +87,16 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: isai-debug-apk
-          path: native-android/app/build/outputs/apk/debug/*.apk
+          name: isai-debug-apks
+          path: native-android/app/build/outputs/apk/*/debug/*.apk
           if-no-files-found: error
 
       - name: Upload release APK (unsigned)
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: isai-release-unsigned-apk
-          path: native-android/app/build/outputs/apk/release/*.apk
+          name: isai-release-unsigned-apks
+          path: native-android/app/build/outputs/apk/*/release/*.apk
           if-no-files-found: error
 
       - name: Upload reports

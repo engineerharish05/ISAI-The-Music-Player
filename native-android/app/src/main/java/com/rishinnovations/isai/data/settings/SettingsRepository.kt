@@ -38,7 +38,7 @@ data class AppSettings(
     val eqLevels: List<Int> = emptyList(),
     val bassStrength: Int = 0,
     val loudnessGainMb: Int = 0,
-    val onlineEnabled: Boolean = false
+    val onlineEnabled: Boolean = com.rishinnovations.isai.BuildConfig.ONLINE_FIRST
 )
 
 data class SavedPlayback(
@@ -90,7 +90,7 @@ class SettingsRepository(private val context: Context) {
             eqLevels = p[K.eqLevels]?.split(',')?.mapNotNull { it.toIntOrNull() }.orEmpty(),
             bassStrength = (p[K.bass] ?: 0).coerceIn(0, 1000),
             loudnessGainMb = (p[K.loudness] ?: 0).coerceIn(0, 2000),
-            onlineEnabled = p[K.online] ?: false
+            onlineEnabled = p[K.online] ?: com.rishinnovations.isai.BuildConfig.ONLINE_FIRST
         )
     }.distinctUntilChanged()
 
