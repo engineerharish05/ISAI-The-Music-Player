@@ -99,6 +99,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun setSpeed(speed: Float) = launch { container.settings.setSpeed(speed) }
     fun setSleepFadeOut(on: Boolean) = launch { container.settings.setSleepFadeOut(on) }
     fun setSort(field: SortField, order: SortOrder) = launch { container.settings.setSort(field, order) }
+    fun setOnlineEnabled(on: Boolean) = launch { container.settings.setOnlineEnabled(on) }
     fun setIncludeNonMusic(on: Boolean) = launch { container.settings.setIncludeNonMusic(on) }
     fun setEqEnabled(on: Boolean) = launch { container.settings.setEqEnabled(on) }
     fun setEqPreset(index: Int) = launch { container.settings.setEqPreset(index) }
@@ -106,6 +107,29 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun setBass(strength: Int) = launch { container.settings.setBass(strength) }
     fun setLoudness(gainMb: Int) = launch { container.settings.setLoudness(gainMb) }
     fun resetEffects(bandCount: Int) = launch { container.settings.resetEffects(bandCount) }
+
+    // ---- optional online catalogue ----
+    private val _downloads = kotlinx.coroutines.flow.MutableStateFlow<Map<String, Float>>(emptyMap())
+    /** Progress 0..1 of downloads in flight, keyed by track media id. */
+    val downloads: StateFlow<Map<String, Float>> = _downloads
+
+    suspend fun searchOnline(query: String) = container.online.search(query)
+
+    fun download(track: com.rishinnovations.isai.data.online.OnlineTrack) {
+        if (_downloads.value.containsKey(track.mediaId)) return
+        _downloads.value = _downloads.value + (track.mediaId to 0f)
+        viewModelScope.launch {
+            try {
+                val dir = java.io.File(getApplication<Application>().getExternalFilesDir(android.os.Environment.DIRECTORY_MUSIC), "ISAI")
+                val file = container.online.download(track, dir) { p -> _downloads.value = _downloads.value + (track.mediaId to p) }
+                container.imports.importFiles(listOf(Uri.fromFile(file)))
+            } catch (e: Exception) {
+                com.rishinnovations.isai.AppMessages.post("Download failed: ${track.title}")
+            } finally {
+                _downloads.value = _downloads.value - track.mediaId
+            }
+        }
+    }
 
     fun artworkCacheBytes(): Long = ArtworkCache.sizeBytes(getApplication())
 

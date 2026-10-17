@@ -17,6 +17,7 @@ sealed interface Route {
     /** Built-in lists: favorites, recent, added, most, rec:<id>, decade:<year> */
     data class Collection(val kind: String) : Route
     data object Search : Route
+    data object Online : Route
     data object Equalizer : Route
     data object Stats : Route
     data object About : Route
@@ -31,6 +32,7 @@ fun Route.encode(): String = when (this) {
     is Route.Playlist -> "playlist|$id"
     is Route.Collection -> "collection|$kind"
     Route.Search -> "search"
+    Route.Online -> "online"
     Route.Equalizer -> "equalizer"
     Route.Stats -> "stats"
     Route.About -> "about"
@@ -48,6 +50,7 @@ fun decodeRoute(text: String): Route? {
         "playlist" -> arg.toLongOrNull()?.let { Route.Playlist(it) }
         "collection" -> Route.Collection(arg)
         "search" -> Route.Search
+        "online" -> Route.Online
         "equalizer" -> Route.Equalizer
         "stats" -> Route.Stats
         "about" -> Route.About

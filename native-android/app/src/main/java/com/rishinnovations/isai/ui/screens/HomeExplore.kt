@@ -247,6 +247,7 @@ fun ExploreScreen() {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 SectionHeader("Collections")
                 LazyRow(contentPadding = PaddingValues(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    item { CollectionTile("Online music", "Free & open catalogues", Icons.Filled.Search) { a.nav.push(Route.Online) } }
                     item { CollectionTile("Shuffle everything", "${library.songs.size} songs", Icons.Filled.Shuffle) { a.shuffle(library.songs) } }
                     item { CollectionTile("Fresh additions", "Recently added", Icons.Filled.NewReleases) { a.nav.push(Route.Collection("added")) } }
                     item { CollectionTile("Most played", "From your history", Icons.Filled.TrendingUp) { a.nav.push(Route.Collection("most")) } }

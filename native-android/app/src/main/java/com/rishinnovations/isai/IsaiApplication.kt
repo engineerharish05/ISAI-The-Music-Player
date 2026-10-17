@@ -42,6 +42,7 @@ class AppContainer(app: Application) {
     val imports = ImportManager(app, db, scope)
     val userData = UserDataRepository(db, scope)
     val lyrics = LyricsRepository(app)
+    val online = com.rishinnovations.isai.data.online.OnlineRepository()
     val sleepTimer = SleepTimerController(mainScope)
 
     @Volatile

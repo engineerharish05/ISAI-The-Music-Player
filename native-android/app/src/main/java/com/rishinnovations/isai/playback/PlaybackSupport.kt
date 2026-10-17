@@ -73,6 +73,24 @@ object MediaItems {
         .build()
 }
 
+object OnlineMediaItems {
+    fun from(track: com.rishinnovations.isai.data.online.OnlineTrack): MediaItem = MediaItem.Builder()
+        .setMediaId(track.mediaId)
+        .setUri(track.streamUrl)
+        .setMediaMetadata(
+            MediaMetadata.Builder()
+                .setTitle(track.title)
+                .setArtist(track.artist)
+                .setAlbumTitle(track.album)
+                .setArtworkUri(track.artworkUrl?.let { android.net.Uri.parse(it) })
+                .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
+                .setIsPlayable(true)
+                .setIsBrowsable(false)
+                .build()
+        )
+        .build()
+}
+
 /** Persists the queue (song ids) as a plain text file; position and modes live in DataStore. */
 object QueueStore {
     private fun file(context: Context) = File(context.filesDir, "queue.txt")

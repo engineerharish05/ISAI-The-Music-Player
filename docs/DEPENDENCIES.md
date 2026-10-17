@@ -14,7 +14,9 @@ All runtime dependencies are Apache License 2.0. Versions are pinned in `native-
 | kotlinx.coroutines | 1.9.0 | concurrency |
 | Coil | 2.7.0 | artwork loading |
 
-Test only: JUnit 4.13.2 (EPL 1.0), kotlinx-coroutines-test.
+Network access uses only `java.net.HttpURLConnection` and `org.json` (Android platform); no extra libraries.
+
+Test only: org.json 20240303 (JSON license), JUnit 4.13.2 (EPL 1.0), kotlinx-coroutines-test.
 
 Build tooling: Android Gradle Plugin 8.9.2, Kotlin 2.1.20, KSP 2.1.20-2.0.1.
 

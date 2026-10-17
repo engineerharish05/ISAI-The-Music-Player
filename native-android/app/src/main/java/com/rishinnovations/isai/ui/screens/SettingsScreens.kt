@@ -188,6 +188,15 @@ fun SettingsScreen() {
             }
         }
 
+        Group("Online music (optional)") {
+            SwitchRow(
+                "Enable online sources",
+                "Off by default. When on, ISAI contacts archive.org (and Jamendo, if configured) only when you search or play online music. Local playback never uses the network.",
+                settings.onlineEnabled, a.app::setOnlineEnabled
+            )
+            if (settings.onlineEnabled) LinkRow("Find free music online", "Creative Commons and public-domain catalogues", onClick = { a.nav.push(Route.Online) })
+        }
+
         Group("Your data") {
             LinkRow("Listening statistics", "Based on what you actually listened to", onClick = { a.nav.push(Route.Stats) })
             LinkRow("Clear listening history", "Removes statistics and recommendations based on them. Favorites and playlists are kept.", onClick = { confirmClear = true })

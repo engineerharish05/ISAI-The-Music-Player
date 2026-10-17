@@ -145,7 +145,7 @@ class ImportManager(
         return added
     }
 
-    private fun displayName(uri: Uri): String? = runCatching {
+    private fun displayName(uri: Uri): String? = if (uri.scheme == "file") uri.lastPathSegment else runCatching {
         context.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { if (it.moveToFirst()) it.getString(0) else null }
     }.getOrNull()
 

@@ -146,6 +146,15 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
         c.play()
     }
 
+    /** Streams tracks from an open online catalogue. Online items are not restored after a restart. */
+    fun playOnline(tracks: List<com.rishinnovations.isai.data.online.OnlineTrack>, startIndex: Int = 0) {
+        val c = controller ?: return
+        if (tracks.isEmpty()) return
+        c.setMediaItems(tracks.map(com.rishinnovations.isai.playback.OnlineMediaItems::from), startIndex.coerceIn(0, tracks.lastIndex), 0L)
+        c.prepare()
+        c.play()
+    }
+
     fun shufflePlay(songs: List<Song>) {
         if (songs.isEmpty()) return
         playSongs(songs, Random.nextInt(songs.size), shuffle = true)

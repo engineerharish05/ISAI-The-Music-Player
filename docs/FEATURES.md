@@ -22,8 +22,13 @@
 - Offline recommendations
 - Dark/light/system theme, reduce motion, splash screen with the ISAI emblem, adaptive launcher icon
 
+## Optional online music (v0.3, implemented, not verified on a device)
+- Off by default; enable in Settings. Searches archive.org (CC / public-domain audio) and Jamendo (only when built with `JAMENDO_CLIENT_ID`).
+- Streams in the same player; "save" downloads the file into app storage and adds it to the library.
+- Online queue items are not restored after an app restart. Network code has not been run against the live services (the build sandbox has no access); only the JSON parsers are unit tested.
+
 ## Not implemented
-- Streaming, downloads, online lyrics, any network feature (deliberately excluded; no INTERNET permission)
+- YouTube/Spotify or other services that forbid third-party extraction (by design), online lyrics
 - Tag/metadata editing
 - Overlapping crossfade and gapless-specific tuning beyond Media3 defaults
 - Instrumented (on-device) UI tests

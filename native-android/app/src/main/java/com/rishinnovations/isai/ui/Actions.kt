@@ -22,6 +22,11 @@ class Actions(
         player.playSongs(songs, index)
     }
 
+    fun playOnline(tracks: List<com.rishinnovations.isai.data.online.OnlineTrack>, index: Int) {
+        ensureNotificationPermission()
+        player.playOnline(tracks, index)
+    }
+
     fun shuffle(songs: List<Song>) {
         ensureNotificationPermission()
         player.shufflePlay(songs)

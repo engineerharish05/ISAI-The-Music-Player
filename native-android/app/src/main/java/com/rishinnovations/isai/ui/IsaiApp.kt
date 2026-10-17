@@ -313,6 +313,7 @@ private fun ScreenHost(nav: NavState) {
         is Route.Album, is Route.Artist, is Route.Genre, is Route.Collection -> CollectionScreen(route)
         is Route.Playlist -> PlaylistDetailScreen(route.id)
         Route.Search -> SearchScreen()
+        Route.Online -> com.rishinnovations.isai.ui.screens.OnlineScreen()
         Route.Equalizer -> EqualizerScreen()
         Route.Stats -> StatsScreen()
         Route.About -> AboutScreen()

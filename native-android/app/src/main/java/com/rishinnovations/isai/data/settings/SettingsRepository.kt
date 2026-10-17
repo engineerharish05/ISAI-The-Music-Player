@@ -37,7 +37,8 @@ data class AppSettings(
     val eqPreset: Int = -1,
     val eqLevels: List<Int> = emptyList(),
     val bassStrength: Int = 0,
-    val loudnessGainMb: Int = 0
+    val loudnessGainMb: Int = 0,
+    val onlineEnabled: Boolean = false
 )
 
 data class SavedPlayback(
@@ -64,6 +65,7 @@ class SettingsRepository(private val context: Context) {
         val eqLevels = stringPreferencesKey("eq_levels")
         val bass = intPreferencesKey("bass")
         val loudness = intPreferencesKey("loudness")
+        val online = booleanPreferencesKey("online_enabled")
 
         val pIndex = intPreferencesKey("index")
         val pPosition = longPreferencesKey("position")
@@ -87,7 +89,8 @@ class SettingsRepository(private val context: Context) {
             eqPreset = p[K.eqPreset] ?: -1,
             eqLevels = p[K.eqLevels]?.split(',')?.mapNotNull { it.toIntOrNull() }.orEmpty(),
             bassStrength = (p[K.bass] ?: 0).coerceIn(0, 1000),
-            loudnessGainMb = (p[K.loudness] ?: 0).coerceIn(0, 2000)
+            loudnessGainMb = (p[K.loudness] ?: 0).coerceIn(0, 2000),
+            onlineEnabled = p[K.online] ?: false
         )
     }.distinctUntilChanged()
 
@@ -105,6 +108,7 @@ class SettingsRepository(private val context: Context) {
     suspend fun setSpeed(speed: Float) = edit { it[K.speed] = speed.coerceIn(0.5f, 2f) }
     suspend fun setSleepFadeOut(on: Boolean) = edit { it[K.sleepFade] = on }
     suspend fun setSort(field: SortField, order: SortOrder) = edit { it[K.sortField] = field.name; it[K.sortOrder] = order.name }
+    suspend fun setOnlineEnabled(on: Boolean) = edit { it[K.online] = on }
     suspend fun setIncludeNonMusic(on: Boolean) = edit { it[K.nonMusic] = on }
 
     suspend fun setEqEnabled(on: Boolean) = edit { it[K.eqEnabled] = on }

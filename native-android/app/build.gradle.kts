@@ -15,8 +15,12 @@ android {
         applicationId = "com.rishinnovations.isai"
         minSdk = 26
         targetSdk = 35
-        versionCode = 2
-        versionName = "0.2.0"
+        versionCode = 3
+        versionName = "0.3.0"
+        // Optional Jamendo API client id (free at developer.jamendo.com). Never commit it: pass it as the
+        // JAMENDO_CLIENT_ID environment variable or a Gradle property. Without it Jamendo is simply disabled.
+        val jamendoId = (System.getenv("JAMENDO_CLIENT_ID") ?: (project.findProperty("JAMENDO_CLIENT_ID") as String?) ?: "")
+        buildConfigField("String", "JAMENDO_CLIENT_ID", "\"$jamendoId\"")
     }
 
     // Release signing is configured only when credentials are supplied through the environment
@@ -106,6 +110,7 @@ dependencies {
 
     implementation("io.coil-kt:coil-compose:2.7.0")
 
+    testImplementation("org.json:json:20240303")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
 }

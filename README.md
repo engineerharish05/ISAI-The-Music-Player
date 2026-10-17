@@ -3,7 +3,7 @@
 *Your Day, Your moments, Your Isai.*
 A refined music experience designed around the songs you love.
 
-ISAI is an open-source, offline-first Android music player written natively in Kotlin with Jetpack Compose and AndroidX Media3. It plays the music already on your device. It has no ads, no accounts, no tracking and no internet permission.
+ISAI is an open-source, offline-first Android music player written natively in Kotlin with Jetpack Compose and AndroidX Media3. It plays the music already on your device. It has no ads, no accounts and no tracking. An optional, off-by-default *Online music* feature can stream and save free Creative Commons / public-domain music from archive.org (and Jamendo, if you build with a free client id).
 
 ![ISAI emblem](assets/isai-play-store-icon-512.png)
 
@@ -23,7 +23,7 @@ Status is stated honestly: see [docs/FEATURES.md](docs/FEATURES.md) for exactly 
 - Home-screen widget and Android Auto browse support
 - Dark-first golden theme with a light theme, and a reduce-motion option
 
-Not included by design: streaming, downloading, online lyrics, accounts, cloud sync. See [docs/FEATURES.md](docs/FEATURES.md).
+Optional online music (off by default): search archive.org and Jamendo, stream, and save tracks to your library. Not included by design: YouTube/Spotify or any service that forbids third-party access, online lyrics, accounts, cloud sync. See [docs/FEATURES.md](docs/FEATURES.md).
 
 ## Build
 
