@@ -17,7 +17,7 @@ object LrcParser {
 
     /** Parses LRC text. Falls back to unsynchronised lines when the text has no timestamps. */
     fun parse(raw: String, source: String): Lyrics? {
-        val text = raw.removePrefix("﻿")
+        val text = raw.removePrefix("\uFEFF")
         var offset = 0L
         val timed = ArrayList<LyricLine>()
         val plain = ArrayList<LyricLine>()

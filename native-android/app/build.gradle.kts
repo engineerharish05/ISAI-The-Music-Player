@@ -55,6 +55,8 @@ android {
         textReport = true
         textOutput = file("build/reports/lint-results-debug.txt")
         abortOnError = true
+        // Kotlin's own @OptIn(UnstableApi::class) is enforced by the compiler; this lint check does not recognise it.
+        disable += "UnsafeOptInUsageError"
     }
 
     buildFeatures {

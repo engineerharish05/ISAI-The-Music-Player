@@ -21,6 +21,7 @@ import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.LibraryResult
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
+import androidx.media3.session.SessionError
 import androidx.media3.common.audio.AudioProcessor
 import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Futures
@@ -299,7 +300,7 @@ class PlaybackService : MediaLibraryService() {
             session: MediaLibrarySession, browser: MediaSession.ControllerInfo, mediaId: String
         ): ListenableFuture<LibraryResult<MediaItem>> {
             val item = browseTree.item(mediaId)
-            return Futures.immediateFuture(if (item != null) LibraryResult.ofItem(item, null) else LibraryResult.ofError(LibraryResult.RESULT_ERROR_BAD_VALUE))
+            return Futures.immediateFuture(if (item != null) LibraryResult.ofItem(item, null) else LibraryResult.ofError(SessionError.ERROR_BAD_VALUE))
         }
 
         override fun onGetChildren(
