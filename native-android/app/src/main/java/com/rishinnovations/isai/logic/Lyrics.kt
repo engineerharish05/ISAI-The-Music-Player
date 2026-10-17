@@ -214,7 +214,9 @@ object FlacLyrics {
             return v
         }
         return try {
-            pos += int() // vendor string
+            val vendorLength = int()
+            if (vendorLength < 0) throw IndexOutOfBoundsException()
+            pos += vendorLength // skip the vendor string
             val count = int()
             var found: String? = null
             repeat(count) {

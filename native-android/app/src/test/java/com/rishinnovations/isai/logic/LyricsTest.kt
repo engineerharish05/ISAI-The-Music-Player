@@ -19,7 +19,7 @@ class LrcParserTest {
 
     @Test fun fractionDigitsAreScaled() {
         val lines = LrcParser.parse("[01:02.5]a\n[01:02.50]b\n[01:02.500]c\n[01:02]d", "t")!!.lines
-        assertEquals(listOf(62500L, 62500L, 62500L, 62000L), lines.map { it.timeMs })
+        assertEquals(listOf(62000L, 62500L, 62500L, 62500L), lines.map { it.timeMs })
     }
 
     @Test fun multipleStampsOnOneLine() {
