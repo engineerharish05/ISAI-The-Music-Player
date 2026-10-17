@@ -1,78 +1,32 @@
 package com.rishinnovations.isai
 
-import android.Manifest
-import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.core.content.ContextCompat
+import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import com.rishinnovations.isai.ui.AppViewModel
+import com.rishinnovations.isai.ui.IsaiApp
+import com.rishinnovations.isai.ui.PlayerViewModel
 
 class MainActivity : ComponentActivity() {
-    private val permissionRefresh = mutableIntStateOf(0)
-
-    private val permissionLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
-            val audioPermission = if (Build.VERSION.SDK_INT >= 33) {
-                ContextCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.READ_MEDIA_AUDIO
-                ) == PackageManager.PERMISSION_GRANTED
-            } else {
-                ContextCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.READ_EXTERNAL_STORAGE
-                ) == PackageManager.PERMISSION_GRANTED
-            }
-
-            permissionRefresh.intValue++
-
-            Toast.makeText(
-                this,
-                if (audioPermission) {
-                    "ISAI can access your music"
-                } else {
-                    "Allow Music and audio access in Settings to scan local music"
-                },
-                Toast.LENGTH_LONG
-            ).show()
-        }
+    private val playerViewModel: PlayerViewModel by viewModels()
+    private val appViewModel: AppViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
 
-        if (Build.VERSION.SDK_INT >= 33) {
-            val permissions = buildList {
-                if (ContextCompat.checkSelfPermission(
-                        this@MainActivity,
-                        Manifest.permission.READ_MEDIA_AUDIO
-                    ) != PackageManager.PERMISSION_GRANTED
-                ) add(Manifest.permission.READ_MEDIA_AUDIO)
+        // The position ticker only runs while the screen is visible, so playback costs no UI work in the background.
+        lifecycle.addObserver(object : DefaultLifecycleObserver {
+            override fun onStart(owner: LifecycleOwner) = playerViewModel.onUiVisible(true)
+            override fun onStop(owner: LifecycleOwner) = playerViewModel.onUiVisible(false)
+        })
 
-                if (ContextCompat.checkSelfPermission(
-                        this@MainActivity,
-                        Manifest.permission.POST_NOTIFICATIONS
-                    ) != PackageManager.PERMISSION_GRANTED
-                ) add(Manifest.permission.POST_NOTIFICATIONS)
-            }
-            if (permissions.isNotEmpty()) permissionLauncher.launch(permissions.toTypedArray())
-        } else {
-            if (ContextCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.READ_EXTERNAL_STORAGE
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                permissionLauncher.launch(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE))
-            }
-        }
-
-        setContent {
-            val refresh by permissionRefresh
-            IsaiApp(permissionRefresh = refresh)
-        }
+        setContent { IsaiApp(playerViewModel, appViewModel) }
     }
 }

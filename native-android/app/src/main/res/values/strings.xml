@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ISAI</string>
+    <string name="brand_full">ISAI — The Music Experience</string>
+    <string name="tagline">Your Day, Your moments, Your Isai</string>
+    <string name="brand_description">A Refined Music Experience Designed Around The Songs You Love.</string>
+    <string name="action_listen_now">Listen now</string>
+    <string name="action_add_music">Add music</string>
+    <string name="widget_description">Control ISAI playback from your home screen.</string>
+    <string name="cd_previous">Previous track</string>
+    <string name="cd_play_pause">Play or pause</string>
+    <string name="cd_next">Next track</string>
+    <string name="widget_idle_title">ISAI</string>
+    <string name="widget_idle_subtitle">Tap to open</string>
+</resources>

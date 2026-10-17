@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="isai_icon_background">#090908</color>
+    <color name="isai_window_background">#090908</color>
+    <color name="isai_window_background_light">#FAF6EC</color>
 </resources>

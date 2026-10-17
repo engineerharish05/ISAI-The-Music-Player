@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.ISAI" parent="android:style/Theme.Material.NoActionBar">
-        <item name="android:fontFamily">sans</item>
-        <item name="android:windowBackground">#090908</item>
-        <item name="android:statusBarColor">#090908</item>
-        <item name="android:navigationBarColor">#090908</item>
-        <item name="android:windowLightStatusBar">false</item>
-        <item name="android:colorAccent">#C6A15B</item>
+    <style name="Theme.ISAI.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/isai_icon_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_foreground</item>
+        <item name="postSplashScreenTheme">@style/Theme.ISAI</item>
+    </style>
+
+    <style name="Theme.ISAI" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/isai_window_background_light</item>
+        <item name="android:colorAccent">#9A7B2F</item>
     </style>
 </resources>
